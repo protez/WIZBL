@@ -3,15 +3,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "merkleblock.h"
+#include "wizbl/blockchain/consensus/merkleblock.h"
 
-#include "hash.h"
-#include "consensus/consensus.h"
-#include "utilstrencodings.h"
+#include "wizbl/util/hash.h"
+#include "wizbl/blockchain/consensus/consensus.h"
+#include "wizbl/blockchain/util/utilstrencodings.h"
 
-CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter& filter)
-{
-    header = block.GetBlockHeader();
+CMerkleBlock::CMerkleBlock(const BLBlock& block, CBloomFilter& filter) {
+    header = block.getBlockHeader();
 
     std::vector<bool> vMatch;
     std::vector<uint256> vHashes;
@@ -19,15 +18,12 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter& filter)
     vMatch.reserve(block.vtx.size());
     vHashes.reserve(block.vtx.size());
 
-    for (unsigned int i = 0; i < block.vtx.size(); i++)
-    {
-        const uint256& hash = block.vtx[i]->GetHash();
-        if (filter.IsRelevantAndUpdate(*block.vtx[i]))
-        {
+    for (unsigned int i = 0; i < block.vtx.size(); i++) {
+        const uint256& hash = block.vtx[i]->getHash();
+        if (filter.IsRelevantAndUpdate(*block.vtx[i])) {
             vMatch.push_back(true);
             vMatchedTxn.push_back(std::make_pair(i, hash));
-        }
-        else
+        } else
             vMatch.push_back(false);
         vHashes.push_back(hash);
     }
@@ -35,9 +31,8 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter& filter)
     txn = CPartialMerkleTree(vHashes, vMatch);
 }
 
-CMerkleBlock::CMerkleBlock(const CBlock& block, const std::set<uint256>& txids)
-{
-    header = block.GetBlockHeader();
+CMerkleBlock::CMerkleBlock(const BLBlock& block, const std::set<uint256>& txids) {
+    header = block.getBlockHeader();
 
     std::vector<bool> vMatch;
     std::vector<uint256> vHashes;
@@ -45,9 +40,8 @@ CMerkleBlock::CMerkleBlock(const CBlock& block, const std::set<uint256>& txids)
     vMatch.reserve(block.vtx.size());
     vHashes.reserve(block.vtx.size());
 
-    for (unsigned int i = 0; i < block.vtx.size(); i++)
-    {
-        const uint256& hash = block.vtx[i]->GetHash();
+    for (unsigned int i = 0; i < block.vtx.size(); i++) {
+        const uint256& hash = block.vtx[i]->getHash();
         if (txids.count(hash))
             vMatch.push_back(true);
         else
@@ -109,13 +103,11 @@ uint256 CPartialMerkleTree::TraverseAndExtract(int height, unsigned int pos, uns
             // overflowed the hash array - failure
             fBad = true;
             return uint256();
-        }
-        const uint256 &hash = vHash[nHashUsed++];
+        } const uint256 &hash = vHash[nHashUsed++];
         if (height==0 && fParentOfMatch) { // in case of height 0, we have a matched txid
             vMatch.push_back(hash);
             vnIndex.push_back(pos);
-        }
-        return hash;
+        } return hash;
     } else {
         // otherwise, descend into the subtrees to extract matched txids and hashes
         uint256 left = TraverseAndExtract(height-1, pos*2, nBitsUsed, nHashUsed, vMatch, vnIndex), right;
@@ -125,11 +117,9 @@ uint256 CPartialMerkleTree::TraverseAndExtract(int height, unsigned int pos, uns
                 // The left and right branches should never be identical, as the transaction
                 // hashes covered by them must each be unique.
                 fBad = true;
-            }
-        } else {
+            } } else {
             right = left;
-        }
-        // and combine them before returning
+        } // and combine them before returning
         return Hash(BEGIN(left), END(left), BEGIN(right), END(right));
     }
 }

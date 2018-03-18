@@ -32,20 +32,16 @@ static void run_benchmark(char *name, void (*benchmark)(void*), void (*setup)(vo
         double begin, total;
         if (setup != NULL) {
             setup(data);
-        }
-        begin = gettimedouble();
+        } begin = gettimedouble();
         benchmark(data);
         total = gettimedouble() - begin;
         if (teardown != NULL) {
             teardown(data);
-        }
-        if (total < min) {
+        } if (total < min) {
             min = total;
-        }
-        if (total > max) {
+        } if (total > max) {
             max = total;
-        }
-        sum += total;
+        } sum += total;
     }
     printf("%s: min ", name);
     print_number(min * 1000000000.0 / iter);

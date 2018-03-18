@@ -6,12 +6,12 @@
 #ifndef WIZBL_HASH_H
 #define WIZBL_HASH_H
 
-#include "crypto/ripemd160.h"
-#include "crypto/sha256.h"
+#include "wizbl/blockchain/crypto/ripemd160.h"
+#include "wizbl/blockchain/crypto/sha256.h"
 #include "prevector.h"
-#include "serialize.h"
-#include "uint256.h"
-#include "version.h"
+#include "wizbl/util/serialize.h"
+#include "wizbl/blockchain/util/uint256.h"
+#include "wizbl/blockchain/version.h"
 
 #include <vector>
 
@@ -67,8 +67,7 @@ public:
 
 /** Compute the 256-bit hash of an object. */
 template<typename T1>
-inline uint256 Hash(const T1 pbegin, const T1 pend)
-{
+inline uint256 Hash(const T1 pbegin, const T1 pend) {
     static const unsigned char pblank[1] = {};
     uint256 result;
     CHash256().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
@@ -104,8 +103,7 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
 
 /** Compute the 160-bit hash an object. */
 template<typename T1>
-inline uint160 Hash160(const T1 pbegin, const T1 pend)
-{
+inline uint160 Hash160(const T1 pbegin, const T1 pend) {
     static unsigned char pblank[1] = {};
     uint160 result;
     CHash160().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
@@ -114,21 +112,18 @@ inline uint160 Hash160(const T1 pbegin, const T1 pend)
 }
 
 /** Compute the 160-bit hash of a vector. */
-inline uint160 Hash160(const std::vector<unsigned char>& vch)
-{
+inline uint160 Hash160(const std::vector<unsigned char>& vch) {
     return Hash160(vch.begin(), vch.end());
 }
 
 /** Compute the 160-bit hash of a vector. */
 template<unsigned int N>
-inline uint160 Hash160(const prevector<N, unsigned char>& vch)
-{
+inline uint160 Hash160(const prevector<N, unsigned char>& vch) {
     return Hash160(vch.begin(), vch.end());
 }
 
 /** A writer stream (for serialization) that computes a 256-bit hash. */
-class CHashWriter
-{
+class CHashWriter {
 private:
     CHash256 ctx;
 
@@ -138,15 +133,15 @@ public:
 
     CHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
 
-    int GetType() const { return nType; }
-    int GetVersion() const { return nVersion; }
+    int getType() const { return nType; }
+    int getVersion() const { return nVersion; }
 
     void write(const char *pch, size_t size) {
         ctx.Write((const unsigned char*)pch, size);
     }
 
     // invalidates the object
-    uint256 GetHash() {
+    uint256 getHash() {
         uint256 result;
         ctx.Finalize((unsigned char*)&result);
         return result;
@@ -162,22 +157,19 @@ public:
 
 /** Reads data from an underlying stream, while hashing the read data. */
 template<typename Source>
-class CHashVerifier : public CHashWriter
-{
+class CHashVerifier : public CHashWriter {
 private:
     Source* source;
 
 public:
-    CHashVerifier(Source* source_) : CHashWriter(source_->GetType(), source_->GetVersion()), source(source_) {}
+    CHashVerifier(Source* source_) : CHashWriter(source_->getType(), source_->getVersion()), source(source_) {}
 
-    void read(char* pch, size_t nSize)
-    {
+    void read(char* pch, size_t nSize) {
         source->read(pch, nSize);
         this->write(pch, nSize);
     }
 
-    void ignore(size_t nSize)
-    {
+    void ignore(size_t nSize) {
         char data[1024];
         while (nSize > 0) {
             size_t now = std::min<size_t>(nSize, 1024);
@@ -187,8 +179,7 @@ public:
     }
 
     template<typename T>
-    CHashVerifier<Source>& operator>>(T& obj)
-    {
+    CHashVerifier<Source>& operator>>(T& obj) {
         // Unserialize from this stream
         ::Unserialize(*this, obj);
         return (*this);
@@ -197,11 +188,10 @@ public:
 
 /** Compute the 256-bit hash of an object's serialization. */
 template<typename T>
-uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
-{
+uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION) {
     CHashWriter ss(nType, nVersion);
     ss << obj;
-    return ss.GetHash();
+    return ss.getHash();
 }
 
 unsigned int MurmurHash3(unsigned int nHashSeed, const std::vector<unsigned char>& vDataToHash);
@@ -209,8 +199,7 @@ unsigned int MurmurHash3(unsigned int nHashSeed, const std::vector<unsigned char
 void BIP32Hash(const ChainCode &chainCode, unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]);
 
 /** SipHash-2-4 */
-class CSipHasher
-{
+class CSipHasher {
 private:
     uint64_t v[4];
     uint64_t tmp;
@@ -234,10 +223,10 @@ public:
  *
  *  It is identical to:
  *    SipHasher(k0, k1)
- *      .Write(val.GetUint64(0))
- *      .Write(val.GetUint64(1))
- *      .Write(val.GetUint64(2))
- *      .Write(val.GetUint64(3))
+ *      .Write(val.getUint64(0))
+ *      .Write(val.getUint64(1))
+ *      .Write(val.getUint64(2))
+ *      .Write(val.getUint64(3))
  *      .Finalize()
  */
 uint64_t SipHashUint256(uint64_t k0, uint64_t k1, const uint256& val);

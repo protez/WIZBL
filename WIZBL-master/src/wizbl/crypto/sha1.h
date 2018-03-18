@@ -9,8 +9,7 @@
 #include <stdlib.h>
 
 /** A hasher class for SHA1. */
-class CSHA1
-{
+class CSHA1 {
 private:
     uint32_t s[5];
     unsigned char buf[64];

@@ -5,8 +5,8 @@
 // Based on the public domain implementation 'merged' by D. J. Bernstein
 // See https://cr.yp.to/chacha.html.
 
-#include "crypto/common.h"
-#include "crypto/chacha20.h"
+#include "wizbl/blockchain/crypto/common.h"
+#include "wizbl/blockchain/crypto/chacha20.h"
 
 #include <string.h>
 
@@ -21,8 +21,7 @@ constexpr static inline uint32_t rotl32(uint32_t v, int c) { return (v << c) | (
 static const unsigned char sigma[] = "expand 32-byte k";
 static const unsigned char tau[] = "expand 16-byte k";
 
-void ChaCha20::SetKey(const unsigned char* k, size_t keylen)
-{
+void ChaCha20::setKey(const unsigned char* k, size_t keylen) {
     const unsigned char *constants;
 
     input[4] = ReadLE32(k + 0);
@@ -49,30 +48,25 @@ void ChaCha20::SetKey(const unsigned char* k, size_t keylen)
     input[15] = 0;
 }
 
-ChaCha20::ChaCha20()
-{
+ChaCha20::ChaCha20() {
     memset(input, 0, sizeof(input));
 }
 
-ChaCha20::ChaCha20(const unsigned char* k, size_t keylen)
-{
-    SetKey(k, keylen);
+ChaCha20::ChaCha20(const unsigned char* k, size_t keylen) {
+    setKey(k, keylen);
 }
 
-void ChaCha20::SetIV(uint64_t iv)
-{
+void ChaCha20::setIV(uint64_t iv) {
     input[14] = iv;
     input[15] = iv >> 32;
 }
 
-void ChaCha20::Seek(uint64_t pos)
-{
+void ChaCha20::Seek(uint64_t pos) {
     input[12] = pos;
     input[13] = pos >> 32;
 }
 
-void ChaCha20::Output(unsigned char* c, size_t bytes)
-{
+void ChaCha20::Output(unsigned char* c, size_t bytes) {
     uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
     uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
     unsigned char *ctarget = nullptr;
@@ -102,8 +96,7 @@ void ChaCha20::Output(unsigned char* c, size_t bytes)
         if (bytes < 64) {
             ctarget = c;
             c = tmp;
-        }
-        x0 = j0;
+        } x0 = j0;
         x1 = j1;
         x2 = j2;
         x3 = j3;
@@ -128,8 +121,7 @@ void ChaCha20::Output(unsigned char* c, size_t bytes)
             QUARTERROUND( x1, x6,x11,x12)
             QUARTERROUND( x2, x7, x8,x13)
             QUARTERROUND( x3, x4, x9,x14)
-        }
-        x0 += j0;
+        } x0 += j0;
         x1 += j1;
         x2 += j2;
         x3 += j3;
@@ -169,12 +161,10 @@ void ChaCha20::Output(unsigned char* c, size_t bytes)
         if (bytes <= 64) {
             if (bytes < 64) {
                 for (i = 0;i < bytes;++i) ctarget[i] = c[i];
-            }
-            input[12] = j12;
+            }     input[12] = j12;
             input[13] = j13;
             return;
-        }
-        bytes -= 64;
+        } bytes -= 64;
         c += 64;
     }
 }

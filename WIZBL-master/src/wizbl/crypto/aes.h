@@ -8,7 +8,7 @@
 #define WIZBL_CRYPTO_AES_H
 
 extern "C" {
-#include "crypto/ctaes/ctaes.h"
+#include "wizbl/blockchain/crypto/ctaes/ctaes.h"
 }
 
 static const int AES_BLOCKSIZE = 16;
@@ -16,8 +16,7 @@ static const int AES128_KEYSIZE = 16;
 static const int AES256_KEYSIZE = 32;
 
 /** An encryption class for AES-128. */
-class AES128Encrypt
-{
+class AES128Encrypt {
 private:
     AES128_ctx ctx;
 
@@ -28,8 +27,7 @@ public:
 };
 
 /** A decryption class for AES-128. */
-class AES128Decrypt
-{
+class AES128Decrypt {
 private:
     AES128_ctx ctx;
 
@@ -40,8 +38,7 @@ public:
 };
 
 /** An encryption class for AES-256. */
-class AES256Encrypt
-{
+class AES256Encrypt {
 private:
     AES256_ctx ctx;
 
@@ -52,8 +49,7 @@ public:
 };
 
 /** A decryption class for AES-256. */
-class AES256Decrypt
-{
+class AES256Decrypt {
 private:
     AES256_ctx ctx;
 
@@ -63,8 +59,7 @@ public:
     void Decrypt(unsigned char plaintext[16], const unsigned char ciphertext[16]) const;
 };
 
-class AES256CBCEncrypt
-{
+class AES256CBCEncrypt {
 public:
     AES256CBCEncrypt(const unsigned char key[AES256_KEYSIZE], const unsigned char ivIn[AES_BLOCKSIZE], bool padIn);
     ~AES256CBCEncrypt();
@@ -76,8 +71,7 @@ private:
     unsigned char iv[AES_BLOCKSIZE];
 };
 
-class AES256CBCDecrypt
-{
+class AES256CBCDecrypt {
 public:
     AES256CBCDecrypt(const unsigned char key[AES256_KEYSIZE], const unsigned char ivIn[AES_BLOCKSIZE], bool padIn);
     ~AES256CBCDecrypt();
@@ -89,8 +83,7 @@ private:
     unsigned char iv[AES_BLOCKSIZE];
 };
 
-class AES128CBCEncrypt
-{
+class AES128CBCEncrypt {
 public:
     AES128CBCEncrypt(const unsigned char key[AES128_KEYSIZE], const unsigned char ivIn[AES_BLOCKSIZE], bool padIn);
     ~AES128CBCEncrypt();
@@ -102,8 +95,7 @@ private:
     unsigned char iv[AES_BLOCKSIZE];
 };
 
-class AES128CBCDecrypt
-{
+class AES128CBCDecrypt {
 public:
     AES128CBCDecrypt(const unsigned char key[AES128_KEYSIZE], const unsigned char ivIn[AES_BLOCKSIZE], bool padIn);
     ~AES128CBCDecrypt();

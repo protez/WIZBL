@@ -68,8 +68,7 @@ inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>
 /**
  * Base class for all base58-encoded data
  */
-class CBase58Data
-{
+class BLBase58Data {
 protected:
     //! the version byte(s)
     std::vector<unsigned char> vchVersion;
@@ -78,7 +77,7 @@ protected:
     typedef std::vector<unsigned char, zero_after_free_allocator<unsigned char> > vector_uchar;
     vector_uchar vchData;
 
-    CBase58Data();
+    BLBase58Data();
     void setData(const std::vector<unsigned char> &vchVersionIn, const void* pdata, size_t nSize);
     void setData(const std::vector<unsigned char> &vchVersionIn, const unsigned char *pbegin, const unsigned char *pend);
 
@@ -86,13 +85,13 @@ public:
     bool setString(const char* psz, unsigned int nVersionBytes = 1);
     bool setString(const std::string& str);
     std::string ToString() const;
-    int CompareTo(const CBase58Data& b58) const;
+    int CompareTo(const BLBase58Data& b58) const;
 
-    bool operator==(const CBase58Data& b58) const { return CompareTo(b58) == 0; }
-    bool operator<=(const CBase58Data& b58) const { return CompareTo(b58) <= 0; }
-    bool operator>=(const CBase58Data& b58) const { return CompareTo(b58) >= 0; }
-    bool operator< (const CBase58Data& b58) const { return CompareTo(b58) <  0; }
-    bool operator> (const CBase58Data& b58) const { return CompareTo(b58) >  0; }
+    bool operator==(const BLBase58Data& b58) const { return CompareTo(b58) == 0; }
+    bool operator<=(const BLBase58Data& b58) const { return CompareTo(b58) <= 0; }
+    bool operator>=(const BLBase58Data& b58) const { return CompareTo(b58) >= 0; }
+    bool operator< (const BLBase58Data& b58) const { return CompareTo(b58) <  0; }
+    bool operator> (const BLBase58Data& b58) const { return CompareTo(b58) >  0; }
 };
 
 /** base58-encoded Wizbl addresses.
@@ -101,7 +100,7 @@ public:
  * Script-hash-addresses have version 5 (or 196 testnet).
  * The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
  */
-class CWizblAddress : public CBase58Data {
+class CWizblAddress : public BLBase58Data {
 public:
     bool set(const CKeyID &id);
     bool set(const CScriptID &id);
@@ -128,8 +127,7 @@ public:
 /**
  * A base58-encoded secret key
  */
-class CWizblSecret : public CBase58Data
-{
+class CWizblSecret : public BLBase58Data {
 public:
     void setKey(const CKey& vchSecret);
     CKey getKey();
@@ -141,8 +139,7 @@ public:
     CWizblSecret() {}
 };
 
-template<typename K, int Size, WBLChainParams::Base58Type Type> class CWizblExtKeyBase : public CBase58Data
-{
+template<typename K, int Size, WBLChainParams::Base58Type Type> class CWizblExtKeyBase : public BLBase58Data {
 public:
     void setKey(const K &key) {
         unsigned char vch[Size];
@@ -155,8 +152,7 @@ public:
         if (vchData.size() == Size) {
             // If base58 encoded data does not hold an ext key, return a !IsValid() key
             ret.Decode(vchData.data());
-        }
-        return ret;
+        } return ret;
     }
 
     CWizblExtKeyBase(const K &key) {

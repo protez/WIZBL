@@ -6,9 +6,9 @@
 #ifndef WIZBL_RANDOM_H
 #define WIZBL_RANDOM_H
 
-#include "crypto/chacha20.h"
-#include "crypto/common.h"
-#include "uint256.h"
+#include "wizbl/blockchain/crypto/chacha20.h"
+#include "wizbl/blockchain/crypto/common.h"
+#include "wizbl/blockchain/util/uint256.h"
 
 #include <stdint.h>
 
@@ -18,13 +18,13 @@ void RandAddSeed();
 /**
  * Functions to gather random data via the OpenSSL PRNG
  */
-void GetRandBytes(unsigned char* buf, int num);
-uint64_t GetRand(uint64_t nMax);
-int GetRandInt(int nMax);
-uint256 GetRandHash();
+void getRandBytes(unsigned char* buf, int num);
+uint64_t getRand(uint64_t nMax);
+int getRandInt(int nMax);
+uint256 getRandHash();
 
 /**
- * Add a little bit of randomness to the output of GetStrongRangBytes.
+ * Add a little bit of randomness to the output of getStrongRangBytes.
  * This sleeps for a millisecond, so should only be called when there is
  * no other work to be done.
  */
@@ -34,7 +34,7 @@ void RandAddSeedSleep();
  * Function to gather random data from multiple sources, failing whenever any
  * of those source fail to provide a result.
  */
-void GetStrongRandBytes(unsigned char* buf, int num);
+void getStrongRandBytes(unsigned char* buf, int num);
 
 /**
  * Fast randomness source. This is seeded once with secure random data, but
@@ -54,17 +54,14 @@ private:
 
     void RandomSeed();
 
-    void FillByteBuffer()
-    {
+    void FillByteBuffer() {
         if (requires_seed) {
             RandomSeed();
-        }
-        rng.Output(bytebuf, sizeof(bytebuf));
+        } rng.Output(bytebuf, sizeof(bytebuf));
         bytebuf_size = sizeof(bytebuf);
     }
 
-    void FillBitBuffer()
-    {
+    void FillBitBuffer() {
         bitbuf = rand64();
         bitbuf_size = 64;
     }
@@ -76,8 +73,7 @@ public:
     explicit FastRandomContext(const uint256& seed);
 
     /** Generate a random 64-bit integer. */
-    uint64_t rand64()
-    {
+    uint64_t rand64() {
         if (bytebuf_size < 8) FillByteBuffer();
         uint64_t ret = ReadLE64(bytebuf + 64 - bytebuf_size);
         bytebuf_size -= 8;
@@ -100,8 +96,7 @@ public:
     }
 
     /** Generate a random integer in the range [0..range). */
-    uint64_t randrange(uint64_t range)
-    {
+    uint64_t randrange(uint64_t range) {
         --range;
         int bits = CountBits(range);
         while (true) {
@@ -123,17 +118,17 @@ public:
     bool randbool() { return randbits(1); }
 };
 
-/* Number of random bytes returned by GetOSRand.
+/* Number of random bytes returned by getOSRand.
  * When changing this constant make sure to change all call sites, and make
  * sure that the underlying OS APIs for all platforms support the number.
  * (many cap out at 256 bytes).
  */
 static const ssize_t NUM_OS_RANDOM_BYTES = 32;
 
-/** Get 32 bytes of system entropy. Do not use this in application code: use
- * GetStrongRandBytes instead.
+/** get 32 bytes of system entropy. Do not use this in application code: use
+ * getStrongRandBytes instead.
  */
-void GetOSRand(unsigned char *ent32);
+void getOSRand(unsigned char *ent32);
 
 /** Check that OS randomness is available and returning the requested number
  * of bytes.

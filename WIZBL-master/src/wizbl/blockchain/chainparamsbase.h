@@ -10,11 +10,10 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between wizbl-cli and wizbld)
+ * BLBaseChainParams defines the base parameters (shared between wizbl-cli and wizbld)
  * of a given instance of the Wizbl system.
  */
-class CBaseChainParams
-{
+class BLBaseChainParams {
 public:
     /** BIP70 chain name strings (main, test or regtest) */
     static const std::string MAIN;
@@ -25,18 +24,18 @@ public:
     int RPCPort() const { return nRPCPort; }
 
 protected:
-    CBaseChainParams() {}
+    BLBaseChainParams() {}
 
     int nRPCPort;
     std::string strDataDir;
 };
 
 /**
- * Creates and returns a std::unique_ptr<CBaseChainParams> of the chosen chain.
- * @returns a CBaseChainParams* of the chosen chain.
+ * Creates and returns a std::unique_ptr<BLBaseChainParams> of the chosen chain.
+ * @returns a BLBaseChainParams* of the chosen chain.
  * @throws a std::runtime_error if the chain is not supported.
  */
-std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain);
+std::unique_ptr<BLBaseChainParams> CreateBaseChainParams(const std::string& chain);
 
 /**
  * Append the help messages for the chainparams options to the
@@ -48,14 +47,14 @@ void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp=true);
  * Return the currently selected parameters. This won't change after app
  * startup, except for unit tests.
  */
-const CBaseChainParams& BaseParams();
+const BLBaseChainParams& BaseParams();
 
-/** Sets the params returned by Params() to those for the given network. */
+/** sets the params returned by Params() to those for the given network. */
 void SelectBaseParams(const std::string& chain);
 
 /**
  * Looks for -regtest, -testnet and returns the appropriate BIP70 chain name.
- * @return CBaseChainParams::MAX_NETWORK_TYPES if an invalid combination is given. CBaseChainParams::MAIN by default.
+ * @return BLBaseChainParams::MAX_NETWORK_TYPES if an invalid combination is given. BLBaseChainParams::MAIN by default.
  */
 std::string ChainNameFromCommandLine();
 

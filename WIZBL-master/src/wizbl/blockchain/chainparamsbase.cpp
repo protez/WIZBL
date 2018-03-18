@@ -3,19 +3,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparamsbase.h"
+#include "wizbl/blockchain/chainparamsbase.h"
 
-#include "tinyformat.h"
-#include "util.h"
+#include "wizbl/blockchain/util/tinyformat.h"
+#include "wizbl/blockchain/util/util.h"
 
 #include <assert.h>
 
-const std::string CBaseChainParams::MAIN = "main";
-const std::string CBaseChainParams::TESTNET = "test";
-const std::string CBaseChainParams::REGTEST = "regtest";
+const std::string BLBaseChainParams::MAIN = "main";
+const std::string BLBaseChainParams::TESTNET = "test";
+const std::string BLBaseChainParams::REGTEST = "regtest";
 
-void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
-{
+void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp) {
     strUsage += HelpMessageGroup(_("Chain selection options:"));
     strUsage += HelpMessageOpt("-testnet", _("Use the test chain"));
     if (debugHelp) {
@@ -27,11 +26,9 @@ void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 /**
  * Main network
  */
-class CBaseMainParams : public CBaseChainParams
-{
+class BLBaseMainParams : public BLBaseChainParams {
 public:
-    CBaseMainParams()
-    {
+    BLBaseMainParams() {
         nRPCPort = 8332;
     }
 };
@@ -39,11 +36,9 @@ public:
 /**
  * Testnet (v3)
  */
-class CBaseTestNetParams : public CBaseChainParams
-{
+class BLBaseTestNetParams : public BLBaseChainParams {
 public:
-    CBaseTestNetParams()
-    {
+    BLBaseTestNetParams() {
         nRPCPort = 18332;
         strDataDir = "testnet3";
     }
@@ -52,51 +47,45 @@ public:
 /*
  * Regression test
  */
-class CBaseRegTestParams : public CBaseChainParams
-{
+class BLBaseRegTestParams : public BLBaseChainParams {
 public:
-    CBaseRegTestParams()
-    {
+    BLBaseRegTestParams() {
         nRPCPort = 18332;
         strDataDir = "regtest";
     }
 };
 
-static std::unique_ptr<CBaseChainParams> globalChainBaseParams;
+static std::unique_ptr<BLBaseChainParams> globalChainBaseParams;
 
-const CBaseChainParams& BaseParams()
-{
+const BLBaseChainParams& BaseParams() {
     assert(globalChainBaseParams);
     return *globalChainBaseParams;
 }
 
-std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain)
-{
-    if (chain == CBaseChainParams::MAIN)
-        return std::unique_ptr<CBaseChainParams>(new CBaseMainParams());
-    else if (chain == CBaseChainParams::TESTNET)
-        return std::unique_ptr<CBaseChainParams>(new CBaseTestNetParams());
-    else if (chain == CBaseChainParams::REGTEST)
-        return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
+std::unique_ptr<BLBaseChainParams> CreateBaseChainParams(const std::string& chain) {
+    if (chain == BLBaseChainParams::MAIN)
+        return std::unique_ptr<BLBaseChainParams>(new BLBaseMainParams());
+    else if (chain == BLBaseChainParams::TESTNET)
+        return std::unique_ptr<BLBaseChainParams>(new BLBaseTestNetParams());
+    else if (chain == BLBaseChainParams::REGTEST)
+        return std::unique_ptr<BLBaseChainParams>(new BLBaseRegTestParams());
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
-void SelectBaseParams(const std::string& chain)
-{
+void SelectBaseParams(const std::string& chain) {
     globalChainBaseParams = CreateBaseChainParams(chain);
 }
 
-std::string ChainNameFromCommandLine()
-{
-    bool fRegTest = gArgs.GetBoolArg("-regtest", false);
-    bool fTestNet = gArgs.GetBoolArg("-testnet", false);
+std::string ChainNameFromCommandLine() {
+    bool fRegTest = gArgs.getBoolArg("-regtest", false);
+    bool fTestNet = gArgs.getBoolArg("-testnet", false);
 
     if (fTestNet && fRegTest)
         throw std::runtime_error("Invalid combination of -regtest and -testnet.");
     if (fRegTest)
-        return CBaseChainParams::REGTEST;
+        return BLBaseChainParams::REGTEST;
     if (fTestNet)
-        return CBaseChainParams::TESTNET;
-    return CBaseChainParams::MAIN;
+        return BLBaseChainParams::TESTNET;
+    return BLBaseChainParams::MAIN;
 }

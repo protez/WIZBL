@@ -51,8 +51,7 @@ static void SaveBytes(unsigned char* data16, const AES_state *s) {
             uint8_t v = 0;
             for (b = 0; b < 8; b++) {
                 v |= ((s->slice[b] >> (r * 4 + c)) & 1) << b;
-            }
-            *(data16++) = v;
+            }     *(data16++) = v;
         }
     }
 }
@@ -359,7 +358,7 @@ static void AddRoundKey(AES_state* s, const AES_state* round) {
 }
 
 /** column_0(s) = column_c(a) */
-static void GetOneColumn(AES_state* s, const AES_state* a, int c) {
+static void getOneColumn(AES_state* s, const AES_state* a, int c) {
     int b;
     for (b = 0; b < 8; b++) {
         s->slice[b] = (a->slice[b] >> c) & 0x1111;
@@ -367,7 +366,7 @@ static void GetOneColumn(AES_state* s, const AES_state* a, int c) {
 }
 
 /** column_c1(r) |= (column_0(s) ^= column_c2(a)) */
-static void KeySetupColumnMix(AES_state* s, AES_state* r, const AES_state* a, int c1, int c2) {
+static void KeysetupColumnMix(AES_state* s, AES_state* r, const AES_state* a, int c1, int c2) {
     int b;
     for (b = 0; b < 8; b++) {
         r->slice[b] |= ((s->slice[b] ^= ((a->slice[b] >> c2) & 0x1111)) & 0x1111) << c1;
@@ -375,7 +374,7 @@ static void KeySetupColumnMix(AES_state* s, AES_state* r, const AES_state* a, in
 }
 
 /** Rotate the rows in s one position upwards, and xor in r */
-static void KeySetupTransform(AES_state* s, const AES_state* r) {
+static void KeysetupTransform(AES_state* s, const AES_state* r) {
     int b;
     for (b = 0; b < 8; b++) {
         s->slice[b] = ((s->slice[b] >> 4) | (s->slice[b] << 12)) ^ r->slice[b];
@@ -404,8 +403,7 @@ static void MultX(AES_state* s) {
  *  AES192 uses nkeywords = 6, nrounds = 12
  *  AES256 uses nkeywords = 8, nrounds = 14
  */
-static void AES_setup(AES_state* rounds, const uint8_t* key, int nkeywords, int nrounds)
-{
+static void AES_setup(AES_state* rounds, const uint8_t* key, int nkeywords, int nrounds) {
     int i;
 
     /* The one-byte round constant */
@@ -430,19 +428,18 @@ static void AES_setup(AES_state* rounds, const uint8_t* key, int nkeywords, int 
         }
     }
 
-    GetOneColumn(&column, &rounds[(nkeywords - 1) >> 2], (nkeywords - 1) & 3);
+    getOneColumn(&column, &rounds[(nkeywords - 1) >> 2], (nkeywords - 1) & 3);
 
     for (i = nkeywords; i < 4 * (nrounds + 1); i++) {
         /* Transform column */
         if (pos == 0) {
             SubBytes(&column, 0);
-            KeySetupTransform(&column, &rcon);
+            KeysetupTransform(&column, &rcon);
             MultX(&rcon);
         } else if (nkeywords > 6 && pos == 4) {
             SubBytes(&column, 0);
-        }
-        if (++pos == nkeywords) pos = 0;
-        KeySetupColumnMix(&column, &rounds[i >> 2], &rounds[(i - nkeywords) >> 2], i & 3, (i - nkeywords) & 3);
+        } if (++pos == nkeywords) pos = 0;
+        KeysetupColumnMix(&column, &rounds[i >> 2], &rounds[(i - nkeywords) >> 2], i & 3, (i - nkeywords) & 3);
     }
 }
 

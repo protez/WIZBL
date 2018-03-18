@@ -3,29 +3,26 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "uint256.h"
+#include "wizbl/blockchain/util/uint256.h"
 
-#include "utilstrencodings.h"
+#include "wizbl/blockchain/util/utilstrencodings.h"
 
 #include <stdio.h>
 #include <string.h>
 
 template <unsigned int BITS>
-base_blob<BITS>::base_blob(const std::vector<unsigned char>& vch)
-{
+base_blob<BITS>::base_blob(const std::vector<unsigned char>& vch) {
     assert(vch.size() == sizeof(data));
     memcpy(data, &vch[0], sizeof(data));
 }
 
 template <unsigned int BITS>
-std::string base_blob<BITS>::GetHex() const
-{
+std::string base_blob<BITS>::getHex() const {
     return HexStr(std::reverse_iterator<const uint8_t*>(data + sizeof(data)), std::reverse_iterator<const uint8_t*>(data));
 }
 
 template <unsigned int BITS>
-void base_blob<BITS>::SetHex(const char* psz)
-{
+void base_blob<BITS>::setHex(const char* psz) {
     memset(data, 0, sizeof(data));
 
     // skip leading spaces
@@ -53,27 +50,25 @@ void base_blob<BITS>::SetHex(const char* psz)
 }
 
 template <unsigned int BITS>
-void base_blob<BITS>::SetHex(const std::string& str)
-{
-    SetHex(str.c_str());
+void base_blob<BITS>::setHex(const std::string& str) {
+    setHex(str.c_str());
 }
 
 template <unsigned int BITS>
-std::string base_blob<BITS>::ToString() const
-{
-    return (GetHex());
+std::string base_blob<BITS>::ToString() const {
+    return (getHex());
 }
 
 // Explicit instantiations for base_blob<160>
 template base_blob<160>::base_blob(const std::vector<unsigned char>&);
-template std::string base_blob<160>::GetHex() const;
+template std::string base_blob<160>::getHex() const;
 template std::string base_blob<160>::ToString() const;
-template void base_blob<160>::SetHex(const char*);
-template void base_blob<160>::SetHex(const std::string&);
+template void base_blob<160>::setHex(const char*);
+template void base_blob<160>::setHex(const std::string&);
 
 // Explicit instantiations for base_blob<256>
 template base_blob<256>::base_blob(const std::vector<unsigned char>&);
-template std::string base_blob<256>::GetHex() const;
+template std::string base_blob<256>::getHex() const;
 template std::string base_blob<256>::ToString() const;
-template void base_blob<256>::SetHex(const char*);
-template void base_blob<256>::SetHex(const std::string&);
+template void base_blob<256>::setHex(const char*);
+template void base_blob<256>::setHex(const std::string&);

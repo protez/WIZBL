@@ -9,8 +9,7 @@
 #include <stdlib.h>
 
 /** A hasher class for SHA-512. */
-class CSHA512
-{
+class CSHA512 {
 private:
     uint64_t s[8];
     unsigned char buf[128];

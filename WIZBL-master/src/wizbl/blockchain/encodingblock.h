@@ -5,7 +5,7 @@
 #ifndef WIZBL_BLOCK_ENCODINGS_H
 #define WIZBL_BLOCK_ENCODINGS_H
 
-#include "primitives/block.h"
+#include "wizbl/blockchain/primitives/block.h"
 
 #include <memory>
 
@@ -49,8 +49,7 @@ public:
                     if (index > std::numeric_limits<uint16_t>::max())
                         throw std::ios_base::failure("index overflowed 16 bits");
                     indexes[i] = index;
-                }
-            }
+                }     }
 
             uint16_t offset = 0;
             for (size_t j = 0; j < indexes.size(); j++) {
@@ -58,13 +57,11 @@ public:
                     throw std::ios_base::failure("indexes overflowed 16 bits");
                 indexes[j] = indexes[j] + offset;
                 offset = indexes[j] + 1;
-            }
-        } else {
+            } } else {
             for (size_t i = 0; i < indexes.size(); i++) {
                 uint64_t index = indexes[i] - (i == 0 ? 0 : (indexes[i - 1] + 1));
                 READWRITE(COMPACTSIZE(index));
-            }
-        }
+            } }
     }
 };
 
@@ -91,17 +88,16 @@ public:
                 txn.resize(std::min((uint64_t)(1000 + txn.size()), txn_size));
                 for (; i < txn.size(); i++)
                     READWRITE(REF(TransactionCompressor(txn[i])));
-            }
-        } else {
+            } } else {
             for (size_t i = 0; i < txn.size(); i++)
                 READWRITE(REF(TransactionCompressor(txn[i])));
         }
     }
 };
 
-// Dumb serialization/storage-helper for CBlockHeaderAndShortTxIDs and PartiallyDownloadedBlock
+// Dumb serialization/storage-helper for BLBlockHeaderAndShortTxIDs and PartiallyDownloadedBlock
 struct PrefilledTransaction {
-    // Used as an offset since last prefilled tx in CBlockHeaderAndShortTxIDs,
+    // Used as an offset since last prefilled tx in BLBlockHeaderAndShortTxIDs,
     // as a proper transaction-in-block-index in PartiallyDownloadedBlock
     uint16_t index;
     CTransactionRef tx;
@@ -119,8 +115,7 @@ struct PrefilledTransaction {
     }
 };
 
-typedef enum ReadStatus_t
-{
+typedef enum ReadStatus_t {
     READ_STATUS_OK,
     READ_STATUS_INVALID, // Invalid object, peer is sending bogus crap
     READ_STATUS_FAILED, // Failed to process object
@@ -128,7 +123,7 @@ typedef enum ReadStatus_t
                                    // failure in CheckBlock.
 } ReadStatus;
 
-class CBlockHeaderAndShortTxIDs {
+class BLBlockHeaderAndShortTxIDs {
 private:
     mutable uint64_t shorttxidk0, shorttxidk1;
     uint64_t nonce;
@@ -143,14 +138,14 @@ protected:
     std::vector<PrefilledTransaction> prefilledtxn;
 
 public:
-    CBlockHeader header;
+    BLBlockHeader header;
 
     // Dummy for deserialization
-    CBlockHeaderAndShortTxIDs() {}
+    BLBlockHeaderAndShortTxIDs() {}
 
-    CBlockHeaderAndShortTxIDs(const CBlock& block, bool fUseWTXID);
+    BLBlockHeaderAndShortTxIDs(const BLBlock& block, bool fUseWTXID);
 
-    uint64_t GetShortID(const uint256& txhash) const;
+    uint64_t getShortID(const uint256& txhash) const;
 
     size_t BlockTxCount() const { return shorttxids.size() + prefilledtxn.size(); }
 
@@ -173,16 +168,13 @@ public:
                     READWRITE(msb);
                     shorttxids[i] = (uint64_t(msb) << 32) | uint64_t(lsb);
                     static_assert(SHORTTXIDS_LENGTH == 6, "shorttxids serialization assumes 6-byte shorttxids");
-                }
-            }
-        } else {
+                }     } } else {
             for (size_t i = 0; i < shorttxids.size(); i++) {
                 uint32_t lsb = shorttxids[i] & 0xffffffff;
                 uint16_t msb = (shorttxids[i] >> 32) & 0xffff;
                 READWRITE(lsb);
                 READWRITE(msb);
-            }
-        }
+            } }
 
         READWRITE(prefilledtxn);
 
@@ -197,13 +189,13 @@ protected:
     size_t prefilled_count = 0, mempool_count = 0, extra_count = 0;
     CTxMemPool* pool;
 public:
-    CBlockHeader header;
+    BLBlockHeader header;
     PartiallyDownloadedBlock(CTxMemPool* poolIn) : pool(poolIn) {}
 
     // extra_txn is a list of extra transactions to look at, in <witness hash, reference> form
-    ReadStatus InitData(const CBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<std::pair<uint256, CTransactionRef>>& extra_txn);
+    ReadStatus InitData(const BLBlockHeaderAndShortTxIDs& cmpctblock, const std::vector<std::pair<uint256, CTransactionRef>>& extra_txn);
     bool IsTxAvailable(size_t index) const;
-    ReadStatus FillBlock(CBlock& block, const std::vector<CTransactionRef>& vtx_missing);
+    ReadStatus FillBlock(BLBlock& block, const std::vector<CTransactionRef>& vtx_missing);
 };
 
 #endif

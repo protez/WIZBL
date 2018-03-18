@@ -4,7 +4,7 @@
 
 #include "base58.h"
 
-#include "hash.h"
+#include "wizbl/util/hash.h"
 #include "wizbl/blockchain/util/uint256.h"
 
 #include <assert.h>
@@ -18,8 +18,7 @@
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
-{
+bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch) {
     // Skip leading spaces.
     while (*psz && isspace(*psz))
         psz++;
@@ -46,8 +45,7 @@ bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
             carry += 58 * (*it);
             *it = carry % 256;
             carry /= 256;
-        }
-        assert(carry == 0);
+        } assert(carry == 0);
         length = i;
         psz++;
     }
@@ -68,8 +66,7 @@ bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
     return true;
 }
 
-std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
-{
+std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend) {
     // Skip & count leading zeroes.
     int zeroes = 0;
     int length = 0;
@@ -108,18 +105,15 @@ std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
     return str;
 }
 
-std::string EncodeBase58(const std::vector<unsigned char>& vch)
-{
+std::string EncodeBase58(const std::vector<unsigned char>& vch) {
     return EncodeBase58(vch.data(), vch.data() + vch.size());
 }
 
-bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet)
-{
+bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet) {
     return DecodeBase58(str.c_str(), vchRet);
 }
 
-std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn)
-{
+std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn) {
     // add 4-byte hash check to the end
     std::vector<unsigned char> vch(vchIn);
     uint256 hash = Hash(vch.begin(), vch.end());
@@ -127,8 +121,7 @@ std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn)
     return EncodeBase58(vch);
 }
 
-bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet)
-{
+bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet) {
     if (!DecodeBase58(psz, vchRet) ||
         (vchRet.size() < 4)) {
         vchRet.clear();
@@ -144,32 +137,27 @@ bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet)
     return true;
 }
 
-bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet)
-{
+bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet) {
     return DecodeBase58Check(str.c_str(), vchRet);
 }
 
-CBase58Data::CBase58Data()
-{
+BLBase58Data::BLBase58Data() {
     vchVersion.clear();
     vchData.clear();
 }
 
-void CBase58Data::setData(const std::vector<unsigned char>& vchVersionIn, const void* pdata, size_t nSize)
-{
+void BLBase58Data::setData(const std::vector<unsigned char>& vchVersionIn, const void* pdata, size_t nSize) {
     vchVersion = vchVersionIn;
     vchData.resize(nSize);
     if (!vchData.empty())
         memcpy(vchData.data(), pdata, nSize);
 }
 
-void CBase58Data::setData(const std::vector<unsigned char>& vchVersionIn, const unsigned char* pbegin, const unsigned char* pend)
-{
+void BLBase58Data::setData(const std::vector<unsigned char>& vchVersionIn, const unsigned char* pbegin, const unsigned char* pend) {
     setData(vchVersionIn, (void*)pbegin, pend - pbegin);
 }
 
-bool CBase58Data::setString(const char* psz, unsigned int nVersionBytes)
-{
+bool BLBase58Data::setString(const char* psz, unsigned int nVersionBytes) {
     std::vector<unsigned char> vchTemp;
     bool rc58 = DecodeBase58Check(psz, vchTemp);
     if ((!rc58) || (vchTemp.size() < nVersionBytes)) {
@@ -185,20 +173,17 @@ bool CBase58Data::setString(const char* psz, unsigned int nVersionBytes)
     return true;
 }
 
-bool CBase58Data::setString(const std::string& str)
-{
+bool BLBase58Data::setString(const std::string& str) {
     return setString(str.c_str());
 }
 
-std::string CBase58Data::ToString() const
-{
+std::string BLBase58Data::ToString() const {
     std::vector<unsigned char> vch = vchVersion;
     vch.insert(vch.end(), vchData.begin(), vchData.end());
     return EncodeBase58Check(vch);
 }
 
-int CBase58Data::CompareTo(const CBase58Data& b58) const
-{
+int BLBase58Data::CompareTo(const BLBase58Data& b58) const {
     if (vchVersion < b58.vchVersion)
         return -1;
     if (vchVersion > b58.vchVersion)
@@ -210,10 +195,8 @@ int CBase58Data::CompareTo(const CBase58Data& b58) const
     return 0;
 }
 
-namespace
-{
-class CWizblAddressVisitor : public boost::static_visitor<bool>
-{
+namespace {
+class CWizblAddressVisitor : public boost::static_visitor<bool> {
 private:
     CWizblAddress* addr;
     const WBLChainParams& params;
@@ -228,59 +211,49 @@ public:
 
 } // namespace
 
-bool CWizblAddress::set(const CKeyID& id)
-{
+bool CWizblAddress::set(const CKeyID& id) {
     return set(id, Params());
 }
 
-bool CWizblAddress::set(const CScriptID& id)
-{
+bool CWizblAddress::set(const CScriptID& id) {
     return set(id, Params());
 }
 
-bool CWizblAddress::set(const CTxDestination& dest)
-{
+bool CWizblAddress::set(const CTxDestination& dest) {
     return set(dest, Params());
 }
 
 
-bool CWizblAddress::set(const CKeyID& id, const WBLChainParams &params)
-{
+bool CWizblAddress::set(const CKeyID& id, const WBLChainParams &params) {
     setData(params.Base58Prefix(WBLChainParams::PUBKEY_ADDRESS), &id, 20);
     return true;
 }
 
-bool CWizblAddress::set(const CScriptID& id, const WBLChainParams &params)
-{
+bool CWizblAddress::set(const CScriptID& id, const WBLChainParams &params) {
     setData(params.Base58Prefix(WBLChainParams::SCRIPT_ADDRESS), &id, 20);
     return true;
 }
 
-bool CWizblAddress::set(const CTxDestination& dest, const WBLChainParams &params)
-{
+bool CWizblAddress::set(const CTxDestination& dest, const WBLChainParams &params) {
     return boost::apply_visitor(CWizblAddressVisitor(this, params), dest);
 }
 
-bool CWizblAddress::IsValid() const
-{
+bool CWizblAddress::IsValid() const {
     return IsValid(Params());
 }
 
-bool CWizblAddress::IsValid(const WBLChainParams& params) const
-{
+bool CWizblAddress::IsValid(const WBLChainParams& params) const {
     bool fCorrectSize = vchData.size() == 20;
     bool fKnownVersion = vchVersion == params.Base58Prefix(WBLChainParams::PUBKEY_ADDRESS) ||
                          vchVersion == params.Base58Prefix(WBLChainParams::SCRIPT_ADDRESS);
     return fCorrectSize && fKnownVersion;
 }
 
-CTxDestination CWizblAddress::get() const
-{
+CTxDestination CWizblAddress::get() const {
     return get(Params());
 }
 
-CTxDestination CWizblAddress::get(const WBLChainParams &params) const
-{
+CTxDestination CWizblAddress::get(const WBLChainParams &params) const {
     if (!IsValid(params))
         return CNoDestination();
     uint160 id;
@@ -293,13 +266,11 @@ CTxDestination CWizblAddress::get(const WBLChainParams &params) const
         return CNoDestination();
 }
 
-bool CWizblAddress::getKeyID(CKeyID& keyID) const
-{
+bool CWizblAddress::getKeyID(CKeyID& keyID) const {
     return getKeyID(keyID, Params());
 }
 
-bool CWizblAddress::getKeyID(CKeyID& keyID, const WBLChainParams &params) const
-{
+bool CWizblAddress::getKeyID(CKeyID& keyID, const WBLChainParams &params) const {
     if (!IsValid(params) || vchVersion != params.Base58Prefix(WBLChainParams::PUBKEY_ADDRESS))
         return false;
     uint160 id;
@@ -308,40 +279,34 @@ bool CWizblAddress::getKeyID(CKeyID& keyID, const WBLChainParams &params) const
     return true;
 }
 
-bool CWizblAddress::IsScript() const
-{
+bool CWizblAddress::IsScript() const {
     return IsValid() && vchVersion == Params().Base58Prefix(WBLChainParams::SCRIPT_ADDRESS);
 }
 
-void CWizblSecret::setKey(const CKey& vchSecret)
-{
+void CWizblSecret::setKey(const CKey& vchSecret) {
     assert(vchSecret.IsValid());
     setData(Params().Base58Prefix(WBLChainParams::SECRET_KEY), vchSecret.begin(), vchSecret.size());
     if (vchSecret.IsCompressed())
         vchData.push_back(1);
 }
 
-CKey CWizblSecret::getKey()
-{
+CKey CWizblSecret::getKey() {
     CKey ret;
     assert(vchData.size() >= 32);
     ret.set(vchData.begin(), vchData.begin() + 32, vchData.size() > 32 && vchData[32] == 1);
     return ret;
 }
 
-bool CWizblSecret::IsValid() const
-{
+bool CWizblSecret::IsValid() const {
     bool fExpectedFormat = vchData.size() == 32 || (vchData.size() == 33 && vchData[32] == 1);
     bool fCorrectVersion = vchVersion == Params().Base58Prefix(WBLChainParams::SECRET_KEY);
     return fExpectedFormat && fCorrectVersion;
 }
 
-bool CWizblSecret::setString(const char* pszSecret)
-{
-    return CBase58Data::setString(pszSecret) && IsValid();
+bool CWizblSecret::setString(const char* pszSecret) {
+    return BLBase58Data::setString(pszSecret) && IsValid();
 }
 
-bool CWizblSecret::setString(const std::string& strSecret)
-{
+bool CWizblSecret::setString(const std::string& strSecret) {
     return setString(strSecret.c_str());
 }

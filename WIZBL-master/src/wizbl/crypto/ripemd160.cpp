@@ -2,18 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "crypto/ripemd160.h"
+#include "wizbl/blockchain/crypto/ripemd160.h"
 
-#include "crypto/common.h"
+#include "wizbl/blockchain/crypto/common.h"
 
 #include <string.h>
 
 // Internal implementation code.
-namespace
-{
+namespace {
 /// Internal RIPEMD-160 implementation.
-namespace ripemd160
-{
+namespace ripemd160 {
 uint32_t inline f1(uint32_t x, uint32_t y, uint32_t z) { return x ^ y ^ z; }
 uint32_t inline f2(uint32_t x, uint32_t y, uint32_t z) { return (x & y) | (~x & z); }
 uint32_t inline f3(uint32_t x, uint32_t y, uint32_t z) { return (x | ~y) ^ z; }
@@ -21,8 +19,7 @@ uint32_t inline f4(uint32_t x, uint32_t y, uint32_t z) { return (x & z) | (y & ~
 uint32_t inline f5(uint32_t x, uint32_t y, uint32_t z) { return x ^ (y | ~z); }
 
 /** Initialize RIPEMD-160 state. */
-void inline Initialize(uint32_t* s)
-{
+void inline Initialize(uint32_t* s) {
     s[0] = 0x67452301ul;
     s[1] = 0xEFCDAB89ul;
     s[2] = 0x98BADCFEul;
@@ -32,8 +29,7 @@ void inline Initialize(uint32_t* s)
 
 uint32_t inline rol(uint32_t x, int i) { return (x << i) | (x >> (32 - i)); }
 
-void inline Round(uint32_t& a, uint32_t b, uint32_t& c, uint32_t d, uint32_t e, uint32_t f, uint32_t x, uint32_t k, int r)
-{
+void inline Round(uint32_t& a, uint32_t b, uint32_t& c, uint32_t d, uint32_t e, uint32_t f, uint32_t x, uint32_t k, int r) {
     a = rol(a + f + x + k, r) + e;
     c = rol(c, 10);
 }
@@ -51,8 +47,7 @@ void inline R42(uint32_t& a, uint32_t b, uint32_t& c, uint32_t d, uint32_t e, ui
 void inline R52(uint32_t& a, uint32_t b, uint32_t& c, uint32_t d, uint32_t e, uint32_t x, int r) { Round(a, b, c, d, e, f1(b, c, d), x, 0, r); }
 
 /** Perform a RIPEMD-160 transformation, processing a 64-byte chunk. */
-void Transform(uint32_t* s, const unsigned char* chunk)
-{
+void Transform(uint32_t* s, const unsigned char* chunk) {
     uint32_t a1 = s[0], b1 = s[1], c1 = s[2], d1 = s[3], e1 = s[4];
     uint32_t a2 = a1, b2 = b1, c2 = c1, d2 = d1, e2 = e1;
     uint32_t w0 = ReadLE32(chunk + 0), w1 = ReadLE32(chunk + 4), w2 = ReadLE32(chunk + 8), w3 = ReadLE32(chunk + 12);
@@ -239,13 +234,11 @@ void Transform(uint32_t* s, const unsigned char* chunk)
 
 ////// RIPEMD160
 
-CRIPEMD160::CRIPEMD160() : bytes(0)
-{
+CRIPEMD160::CRIPEMD160() : bytes(0) {
     ripemd160::Initialize(s);
 }
 
-CRIPEMD160& CRIPEMD160::Write(const unsigned char* data, size_t len)
-{
+CRIPEMD160& CRIPEMD160::Write(const unsigned char* data, size_t len) {
     const unsigned char* end = data + len;
     size_t bufsize = bytes % 64;
     if (bufsize && bufsize + len >= 64) {
@@ -270,8 +263,7 @@ CRIPEMD160& CRIPEMD160::Write(const unsigned char* data, size_t len)
     return *this;
 }
 
-void CRIPEMD160::Finalize(unsigned char hash[OUTPUT_SIZE])
-{
+void CRIPEMD160::Finalize(unsigned char hash[OUTPUT_SIZE]) {
     static const unsigned char pad[64] = {0x80};
     unsigned char sizedesc[8];
     WriteLE64(sizedesc, bytes << 3);
@@ -284,8 +276,7 @@ void CRIPEMD160::Finalize(unsigned char hash[OUTPUT_SIZE])
     WriteLE32(hash + 16, s[4]);
 }
 
-CRIPEMD160& CRIPEMD160::Reset()
-{
+CRIPEMD160& CRIPEMD160::Reset() {
     bytes = 0;
     ripemd160::Initialize(s);
     return *this;

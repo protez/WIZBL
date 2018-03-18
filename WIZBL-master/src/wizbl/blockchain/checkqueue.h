@@ -5,7 +5,7 @@
 #ifndef WIZBL_CHECKQUEUE_H
 #define WIZBL_CHECKQUEUE_H
 
-#include "sync.h"
+#include "wizbl/blockchain/net/sync.h"
 
 #include <algorithm>
 #include <vector>
@@ -27,8 +27,7 @@ class CCheckQueueControl;
   * as an N'th worker, until all jobs are done.
   */
 template <typename T>
-class CCheckQueue
-{
+class CCheckQueue {
 private:
     //! Mutex to protect the inner state
     boost::mutex mutex;
@@ -66,15 +65,13 @@ private:
     unsigned int nBatchSize;
 
     /** Internal function that does bulk of the verification work. */
-    bool Loop(bool fMaster = false)
-    {
+    bool Loop(bool fMaster = false) {
         boost::condition_variable& cond = fMaster ? condMaster : condWorker;
         std::vector<T> vChecks;
         vChecks.reserve(nBatchSize);
         unsigned int nNow = 0;
         bool fOk = true;
-        do {
-            {
+        do { {
                 boost::unique_lock<boost::mutex> lock(mutex);
                 // first do the clean-up of the previous loop run (allowing us to do it in the same critsect)
                 if (nNow) {
@@ -86,8 +83,7 @@ private:
                 } else {
                     // first iteration
                     nTotal++;
-                }
-                // logically, the do loop starts here
+                }         // logically, the do loop starts here
                 while (queue.empty()) {
                     if ((fMaster || fQuit) && nTodo == 0) {
                         nTotal--;
@@ -97,12 +93,10 @@ private:
                             fAllOk = true;
                         // return the current status
                         return fRet;
-                    }
-                    nIdle++;
+                    }             nIdle++;
                     cond.wait(lock); // wait
                     nIdle--;
-                }
-                // Decide how many work units to process now.
+                }         // Decide how many work units to process now.
                 // * Do not try to do everything at once, but aim for increasingly smaller batches so
                 //   all workers finish approximately simultaneously.
                 // * Try to account for idle jobs which will instantly start helping.
@@ -114,11 +108,9 @@ private:
                     // queue to the local batch vector instead of copying.
                     vChecks[i].swap(queue.back());
                     queue.pop_back();
-                }
-                // Check whether we need to do work at all
+                }         // Check whether we need to do work at all
                 fOk = fAllOk;
-            }
-            // execute work
+            }     // execute work
             for (T& check : vChecks)
                 if (fOk)
                     fOk = check();
@@ -134,34 +126,29 @@ public:
     CCheckQueue(unsigned int nBatchSizeIn) : nIdle(0), nTotal(0), fAllOk(true), nTodo(0), fQuit(false), nBatchSize(nBatchSizeIn) {}
 
     //! Worker thread
-    void Thread()
-    {
+    void Thread() {
         Loop();
     }
 
     //! Wait until execution finishes, and return whether all evaluations were successful.
-    bool Wait()
-    {
+    bool Wait() {
         return Loop(true);
     }
 
     //! Add a batch of checks to the queue
-    void Add(std::vector<T>& vChecks)
-    {
+    void Add(std::vector<T>& vChecks) {
         boost::unique_lock<boost::mutex> lock(mutex);
         for (T& check : vChecks) {
             queue.push_back(T());
             check.swap(queue.back());
-        }
-        nTodo += vChecks.size();
+        } nTodo += vChecks.size();
         if (vChecks.size() == 1)
             condWorker.notify_one();
         else if (vChecks.size() > 1)
             condWorker.notify_all();
     }
 
-    ~CCheckQueue()
-    {
+    ~CCheckQueue() {
     }
 
 };
@@ -171,8 +158,7 @@ public:
  * queue is finished before continuing.
  */
 template <typename T>
-class CCheckQueueControl
-{
+class CCheckQueueControl {
 private:
     CCheckQueue<T> * const pqueue;
     bool fDone;
@@ -181,16 +167,14 @@ public:
     CCheckQueueControl() = delete;
     CCheckQueueControl(const CCheckQueueControl&) = delete;
     CCheckQueueControl& operator=(const CCheckQueueControl&) = delete;
-    explicit CCheckQueueControl(CCheckQueue<T> * const pqueueIn) : pqueue(pqueueIn), fDone(false)
-    {
+    explicit CCheckQueueControl(CCheckQueue<T> * const pqueueIn) : pqueue(pqueueIn), fDone(false) {
         // passed queue is supposed to be unused, or nullptr
         if (pqueue != nullptr) {
             ENTER_CRITICAL_SECTION(pqueue->ControlMutex);
         }
     }
 
-    bool Wait()
-    {
+    bool Wait() {
         if (pqueue == nullptr)
             return true;
         bool fRet = pqueue->Wait();
@@ -198,14 +182,12 @@ public:
         return fRet;
     }
 
-    void Add(std::vector<T>& vChecks)
-    {
+    void Add(std::vector<T>& vChecks) {
         if (pqueue != nullptr)
             pqueue->Add(vChecks);
     }
 
-    ~CCheckQueueControl()
-    {
+    ~CCheckQueueControl() {
         if (!fDone)
             Wait();
         if (pqueue != nullptr) {

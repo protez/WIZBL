@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "utilstrencodings.h"
+#include "wizbl/blockchain/util/utilstrencodings.h"
 
-#include "tinyformat.h"
+#include "wizbl/blockchain/util/tinyformat.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -14,26 +14,22 @@
 
 static const std::string CHARS_ALPHA_NUM = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-static const std::string SAFE_CHARS[] =
-{
+static const std::string SAFE_CHARS[] = {
     CHARS_ALPHA_NUM + " .,;-_/:?@()", // SAFE_CHARS_DEFAULT
     CHARS_ALPHA_NUM + " .,;-_?@", // SAFE_CHARS_UA_COMMENT
     CHARS_ALPHA_NUM + ".-_", // SAFE_CHARS_FILENAME
 };
 
-std::string SanitizeString(const std::string& str, int rule)
-{
+std::string SanitizeString(const std::string& str, int rule) {
     std::string strResult;
-    for (std::string::size_type i = 0; i < str.size(); i++)
-    {
+    for (std::string::size_type i = 0; i < str.size(); i++) {
         if (SAFE_CHARS[rule].find(str[i]) != std::string::npos)
             strResult.push_back(str[i]);
     }
     return strResult;
 }
 
-const signed char p_util_hexdigit[256] =
-{ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+const signed char p_util_hexdigit[256] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   0,1,2,3,4,5,6,7,8,9,-1,-1,-1,-1,-1,-1,
@@ -50,27 +46,22 @@ const signed char p_util_hexdigit[256] =
   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, };
 
-signed char HexDigit(char c)
-{
+signed char HexDigit(char c) {
     return p_util_hexdigit[(unsigned char)c];
 }
 
-bool IsHex(const std::string& str)
-{
-    for(std::string::const_iterator it(str.begin()); it != str.end(); ++it)
-    {
+bool IsHex(const std::string& str) {
+    for(std::string::const_iterator it(str.begin()); it != str.end(); ++it) {
         if (HexDigit(*it) < 0)
             return false;
     }
     return (str.size() > 0) && (str.size()%2 == 0);
 }
 
-std::vector<unsigned char> ParseHex(const char* psz)
-{
+std::vector<unsigned char> ParseHex(const char* psz) {
     // convert hex dump to vector
     std::vector<unsigned char> vch;
-    while (true)
-    {
+    while (true) {
         while (isspace(*psz))
             psz++;
         signed char c = HexDigit(*psz++);
@@ -86,8 +77,7 @@ std::vector<unsigned char> ParseHex(const char* psz)
     return vch;
 }
 
-std::vector<unsigned char> ParseHex(const std::string& str)
-{
+std::vector<unsigned char> ParseHex(const std::string& str) {
     return ParseHex(str.c_str());
 }
 
@@ -110,8 +100,7 @@ void SplitHostPort(std::string in, int &portOut, std::string &hostOut) {
         hostOut = in;
 }
 
-std::string EncodeBase64(const unsigned char* pch, size_t len)
-{
+std::string EncodeBase64(const unsigned char* pch, size_t len) {
     static const char *pbase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     std::string strRet = "";
@@ -120,11 +109,9 @@ std::string EncodeBase64(const unsigned char* pch, size_t len)
     int mode=0, left=0;
     const unsigned char *pchEnd = pch+len;
 
-    while (pch<pchEnd)
-    {
+    while (pch<pchEnd) {
         int enc = *(pch++);
-        switch (mode)
-        {
+        switch (mode) {
             case 0: // we have no bits
                 strRet += pbase64[enc >> 2];
                 left = (enc & 3) << 4;
@@ -145,8 +132,7 @@ std::string EncodeBase64(const unsigned char* pch, size_t len)
         }
     }
 
-    if (mode)
-    {
+    if (mode) {
         strRet += pbase64[left];
         strRet += '=';
         if (mode == 1)
@@ -156,15 +142,12 @@ std::string EncodeBase64(const unsigned char* pch, size_t len)
     return strRet;
 }
 
-std::string EncodeBase64(const std::string& str)
-{
+std::string EncodeBase64(const std::string& str) {
     return EncodeBase64((const unsigned char*)str.c_str(), str.size());
 }
 
-std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
-{
-    static const int decode64_table[256] =
-    {
+std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid) {
+    static const int decode64_table[256] = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1,
@@ -189,8 +172,7 @@ std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
     int mode = 0;
     int left = 0;
 
-    while (1)
-    {
+    while (1) {
          int dec = decode64_table[(unsigned char)*p];
          if (dec == -1) break;
          p++;
@@ -221,8 +203,7 @@ std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
     }
 
     if (pfInvalid)
-        switch (mode)
-        {
+        switch (mode) {
             case 0: // 4n base64 characters processed: ok
                 break;
 
@@ -244,14 +225,12 @@ std::vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
     return vchRet;
 }
 
-std::string DecodeBase64(const std::string& str)
-{
+std::string DecodeBase64(const std::string& str) {
     std::vector<unsigned char> vchRet = DecodeBase64(str.c_str());
     return std::string((const char*)vchRet.data(), vchRet.size());
 }
 
-std::string EncodeBase32(const unsigned char* pch, size_t len)
-{
+std::string EncodeBase32(const unsigned char* pch, size_t len) {
     static const char *pbase32 = "abcdefghijklmnopqrstuvwxyz234567";
 
     std::string strRet="";
@@ -260,11 +239,9 @@ std::string EncodeBase32(const unsigned char* pch, size_t len)
     int mode=0, left=0;
     const unsigned char *pchEnd = pch+len;
 
-    while (pch<pchEnd)
-    {
+    while (pch<pchEnd) {
         int enc = *(pch++);
-        switch (mode)
-        {
+        switch (mode) {
             case 0: // we have no bits
                 strRet += pbase32[enc >> 3];
                 left = (enc & 7) << 2;
@@ -299,8 +276,7 @@ std::string EncodeBase32(const unsigned char* pch, size_t len)
     }
 
     static const int nPadding[5] = {0, 6, 4, 3, 1};
-    if (mode)
-    {
+    if (mode) {
         strRet += pbase32[left];
         for (int n=0; n<nPadding[mode]; n++)
              strRet += '=';
@@ -309,15 +285,12 @@ std::string EncodeBase32(const unsigned char* pch, size_t len)
     return strRet;
 }
 
-std::string EncodeBase32(const std::string& str)
-{
+std::string EncodeBase32(const std::string& str) {
     return EncodeBase32((const unsigned char*)str.c_str(), str.size());
 }
 
-std::vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
-{
-    static const int decode32_table[256] =
-    {
+std::vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid) {
+    static const int decode32_table[256] = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1,
@@ -342,8 +315,7 @@ std::vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
     int mode = 0;
     int left = 0;
 
-    while (1)
-    {
+    while (1) {
          int dec = decode32_table[(unsigned char)*p];
          if (dec == -1) break;
          p++;
@@ -396,8 +368,7 @@ std::vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
     }
 
     if (pfInvalid)
-        switch (mode)
-        {
+        switch (mode) {
             case 0: // 8n base32 characters processed: ok
                 break;
 
@@ -431,14 +402,12 @@ std::vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
     return vchRet;
 }
 
-std::string DecodeBase32(const std::string& str)
-{
+std::string DecodeBase32(const std::string& str) {
     std::vector<unsigned char> vchRet = DecodeBase32(str.c_str());
     return std::string((const char*)vchRet.data(), vchRet.size());
 }
 
-static bool ParsePrechecks(const std::string& str)
-{
+static bool ParsePrechecks(const std::string& str) {
     if (str.empty()) // No empty string allowed
         return false;
     if (str.size() >= 1 && (isspace(str[0]) || isspace(str[str.size()-1]))) // No padding allowed
@@ -448,8 +417,7 @@ static bool ParsePrechecks(const std::string& str)
     return true;
 }
 
-bool ParseInt32(const std::string& str, int32_t *out)
-{
+bool ParseInt32(const std::string& str, int32_t *out) {
     if (!ParsePrechecks(str))
         return false;
     char *endp = nullptr;
@@ -464,8 +432,7 @@ bool ParseInt32(const std::string& str, int32_t *out)
         n <= std::numeric_limits<int32_t>::max();
 }
 
-bool ParseInt64(const std::string& str, int64_t *out)
-{
+bool ParseInt64(const std::string& str, int64_t *out) {
     if (!ParsePrechecks(str))
         return false;
     char *endp = nullptr;
@@ -479,8 +446,7 @@ bool ParseInt64(const std::string& str, int64_t *out)
         n <= std::numeric_limits<int64_t>::max();
 }
 
-bool ParseUInt32(const std::string& str, uint32_t *out)
-{
+bool ParseUInt32(const std::string& str, uint32_t *out) {
     if (!ParsePrechecks(str))
         return false;
     if (str.size() >= 1 && str[0] == '-') // Reject negative values, unfortunately strtoul accepts these by default if they fit in the range
@@ -496,8 +462,7 @@ bool ParseUInt32(const std::string& str, uint32_t *out)
         n <= std::numeric_limits<uint32_t>::max();
 }
 
-bool ParseUInt64(const std::string& str, uint64_t *out)
-{
+bool ParseUInt64(const std::string& str, uint64_t *out) {
     if (!ParsePrechecks(str))
         return false;
     if (str.size() >= 1 && str[0] == '-') // Reject negative values, unfortunately strtoull accepts these by default if they fit in the range
@@ -513,8 +478,7 @@ bool ParseUInt64(const std::string& str, uint64_t *out)
 }
 
 
-bool ParseDouble(const std::string& str, double *out)
-{
+bool ParseDouble(const std::string& str, double *out) {
     if (!ParsePrechecks(str))
         return false;
     if (str.size() >= 2 && str[0] == '0' && str[1] == 'x') // No hexadecimal floats allowed
@@ -527,18 +491,15 @@ bool ParseDouble(const std::string& str, double *out)
     return text.eof() && !text.fail();
 }
 
-std::string FormatParagraph(const std::string& in, size_t width, size_t indent)
-{
+std::string FormatParagraph(const std::string& in, size_t width, size_t indent) {
     std::stringstream out;
     size_t ptr = 0;
     size_t indented = 0;
-    while (ptr < in.size())
-    {
+    while (ptr < in.size()) {
         size_t lineend = in.find_first_of('\n', ptr);
         if (lineend == std::string::npos) {
             lineend = in.size();
-        }
-        const size_t linelen = lineend - ptr;
+        } const size_t linelen = lineend - ptr;
         const size_t rem_width = width - indented;
         if (linelen <= rem_width) {
             out << in.substr(ptr, linelen + 1);
@@ -553,33 +514,27 @@ std::string FormatParagraph(const std::string& in, size_t width, size_t indent)
                     // End of the string, just add it and break
                     out << in.substr(ptr);
                     break;
-                }
-            }
-            out << in.substr(ptr, finalspace - ptr) << "\n";
+                }     }     out << in.substr(ptr, finalspace - ptr) << "\n";
             if (in[finalspace] == '\n') {
                 indented = 0;
             } else if (indent) {
                 out << std::string(indent, ' ');
                 indented = indent;
-            }
-            ptr = finalspace + 1;
+            }     ptr = finalspace + 1;
         }
     }
     return out.str();
 }
 
-std::string i64tostr(int64_t n)
-{
+std::string i64tostr(int64_t n) {
     return strprintf("%d", n);
 }
 
-std::string itostr(int n)
-{
+std::string itostr(int n) {
     return strprintf("%d", n);
 }
 
-int64_t atoi64(const char* psz)
-{
+int64_t atoi64(const char* psz) {
 #ifdef _MSC_VER
     return _atoi64(psz);
 #else
@@ -587,8 +542,7 @@ int64_t atoi64(const char* psz)
 #endif
 }
 
-int64_t atoi64(const std::string& str)
-{
+int64_t atoi64(const std::string& str) {
 #ifdef _MSC_VER
     return _atoi64(str.c_str());
 #else
@@ -596,8 +550,7 @@ int64_t atoi64(const std::string& str)
 #endif
 }
 
-int atoi(const std::string& str)
-{
+int atoi(const std::string& str) {
     return atoi(str.c_str());
 }
 
@@ -612,8 +565,7 @@ int atoi(const std::string& str)
 static const int64_t UPPER_BOUND = 1000000000000000000LL - 1LL;
 
 /** Helper function for ParseFixedPoint */
-static inline bool ProcessMantissaDigit(char ch, int64_t &mantissa, int &mantissa_tzeros)
-{
+static inline bool ProcessMantissaDigit(char ch, int64_t &mantissa, int &mantissa_tzeros) {
     if(ch == '0')
         ++mantissa_tzeros;
     else {
@@ -621,15 +573,13 @@ static inline bool ProcessMantissaDigit(char ch, int64_t &mantissa, int &mantiss
             if (mantissa > (UPPER_BOUND / 10LL))
                 return false; /* overflow */
             mantissa *= 10;
-        }
-        mantissa += ch - '0';
+        } mantissa += ch - '0';
         mantissa_tzeros = 0;
     }
     return true;
 }
 
-bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out)
-{
+bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out) {
     int64_t mantissa = 0;
     int64_t exponent = 0;
     int mantissa_tzeros = 0;
@@ -643,8 +593,7 @@ bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out)
         mantissa_sign = true;
         ++ptr;
     }
-    if (ptr < end)
-    {
+    if (ptr < end) {
         if (val[ptr] == '0') {
             /* pass single 0 */
             ++ptr;
@@ -653,39 +602,32 @@ bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out)
                 if (!ProcessMantissaDigit(val[ptr], mantissa, mantissa_tzeros))
                     return false; /* overflow */
                 ++ptr;
-            }
-        } else return false; /* missing expected digit */
+            } } else return false; /* missing expected digit */
     } else return false; /* empty string or loose '-' */
-    if (ptr < end && val[ptr] == '.')
-    {
+    if (ptr < end && val[ptr] == '.') {
         ++ptr;
-        if (ptr < end && val[ptr] >= '0' && val[ptr] <= '9')
-        {
+        if (ptr < end && val[ptr] >= '0' && val[ptr] <= '9') {
             while (ptr < end && val[ptr] >= '0' && val[ptr] <= '9') {
                 if (!ProcessMantissaDigit(val[ptr], mantissa, mantissa_tzeros))
                     return false; /* overflow */
                 ++ptr;
                 ++point_ofs;
-            }
-        } else return false; /* missing expected digit */
+            } } else return false; /* missing expected digit */
     }
-    if (ptr < end && (val[ptr] == 'e' || val[ptr] == 'E'))
-    {
+    if (ptr < end && (val[ptr] == 'e' || val[ptr] == 'E')) {
         ++ptr;
         if (ptr < end && val[ptr] == '+')
             ++ptr;
         else if (ptr < end && val[ptr] == '-') {
             exponent_sign = true;
             ++ptr;
-        }
-        if (ptr < end && val[ptr] >= '0' && val[ptr] <= '9') {
+        } if (ptr < end && val[ptr] >= '0' && val[ptr] <= '9') {
             while (ptr < end && val[ptr] >= '0' && val[ptr] <= '9') {
                 if (exponent > (UPPER_BOUND / 10LL))
                     return false; /* overflow */
                 exponent = exponent * 10 + val[ptr] - '0';
                 ++ptr;
-            }
-        } else return false; /* missing expected digit */
+            } } else return false; /* missing expected digit */
     }
     if (ptr != end)
         return false; /* trailing garbage */

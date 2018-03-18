@@ -5,52 +5,50 @@
 
 #include "pow.h"
 
-#include "arith_uint256.h"
-#include "chain.h"
-#include "chainparams.h"
-#include "crypto/equihash.h"
-#include "primitives/block.h"
-#include "streams.h"
-#include "uint256.h"
-#include "util.h"
+#include "wizbl/blockchain/util/arith_uint256.h"
+#include "wizbl/blockchain/chain.h"
+#include "wizbl/blockchain/chainparams.h"
+#include "wizbl/blockchain/crypto/equihash.h"
+#include "wizbl/blockchain/primitives/block.h"
+#include "wizbl/util/streams.h"
+#include "wizbl/blockchain/util/uint256.h"
+#include "wizbl/blockchain/util/util.h"
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
-{
-    assert(pindexLast != nullptr);
-    int nHeight = pindexLast->nHeight + 1;
+unsigned int getNextWorkRequired(const BLBlockIndex* pidxLast, const BLBlockHeader *pblock, const Consensus::Params& params) {
+    assert(pidxLast != nullptr);
+    int nHeight = pidxLast->nHeight + 1;
     bool postfork = nHeight >= params.BLHeight;
-    unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(postfork)).GetCompact();
+    unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(postfork)).getCompact();
 
     if (postfork == false) {
-        return WizblGetNextWorkRequired(pindexLast, pblock, params);
+        return WizblgetNextWorkRequired(pidxLast, pblock, params);
     }
     else if (nHeight < params.BLHeight + params.BLPremineWindow) {
         return nProofOfWorkLimit;
     }
     else if (nHeight < params.BLHeight + params.BLPremineWindow + params.nPowAveragingWindow){
-        return UintToArith256(params.powLimitStart).GetCompact();
+        return UintToArith256(params.powLimitStart).getCompact();
     }
     
-    const CBlockIndex* pindexFirst = pindexLast;
+    const BLBlockIndex* pidxFirst = pidxLast;
     arith_uint256 bnTot {0};
-    for (int i = 0; pindexFirst && i < params.nPowAveragingWindow; i++) {
+    for (int i = 0; pidxFirst && i < params.nPowAveragingWindow; i++) {
         arith_uint256 bnTmp;
-        bnTmp.SetCompact(pindexFirst->nBits);
+        bnTmp.setCompact(pidxFirst->nBits);
         bnTot += bnTmp;
-        pindexFirst = pindexFirst->pprev;
+        pidxFirst = pidxFirst->pprev;
     }
     
-    if (pindexFirst == NULL)
+    if (pidxFirst == NULL)
         return nProofOfWorkLimit;
     
     arith_uint256 bnAvg {bnTot / params.nPowAveragingWindow};
     
 
-    return CalculateNextWorkRequired(bnAvg, pindexLast->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
+    return CalculateNextWorkRequired(bnAvg, pidxLast->getMedianTimePast(), pidxFirst->getMedianTimePast(), params);
 }
 
-unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params)
-{
+unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params) {
     
     // Limit adjustment
     int64_t nActualTimespan = nLastBlockTime - nFirstBlockTime;
@@ -69,56 +67,49 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTi
     if (bnNew > bnPowLimit)
         bnNew = bnPowLimit;
 
-    return bnNew.GetCompact();
+    return bnNew.getCompact();
 }
 
 
 // Deprecated for Wizbl
-unsigned int WizblGetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
-{
-    assert(pindexLast != nullptr);
-    unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(false)).GetCompact();
+unsigned int WizblgetNextWorkRequired(const BLBlockIndex* pidxLast, const BLBlockHeader *pblock, const Consensus::Params& params) {
+    assert(pidxLast != nullptr);
+    unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(false)).getCompact();
     
     // Only change once per difficulty adjustment interval
-    if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
-    {
-        if (params.fPowAllowMinDifficultyBlocks)
-        {
+    if ((pidxLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0) {
+        if (params.fPowAllowMinDifficultyBlocks) {
             // Special difficulty rule for testnet:
             // If the new block's timestamp is more than 2* 10 minutes
             // then allow mining of a min-difficulty block.
-            if (pblock->GetBlockTime() > pindexLast->GetBlockTime() + params.nPowTargetSpacing*2)
+            if (pblock->getBlockTime() > pidxLast->getBlockTime() + params.nPowTargetSpacing*2)
                 return nProofOfWorkLimit;
-            else
-            {
+            else {
                 // Return the last non-special-min-difficulty-rules-block
-                const CBlockIndex* pindex = pindexLast;
-                while (pindex->pprev && pindex->nHeight % params.DifficultyAdjustmentInterval() != 0 && pindex->nBits == nProofOfWorkLimit)
-                    pindex = pindex->pprev;
-                return pindex->nBits;
-            }
-        }
-        return pindexLast->nBits;
+                const BLBlockIndex* pidx = pidxLast;
+                while (pidx->pprev && pidx->nHeight % params.DifficultyAdjustmentInterval() != 0 && pidx->nBits == nProofOfWorkLimit)
+                    pidx = pidx->pprev;
+                return pidx->nBits;
+            } } return pidxLast->nBits;
     }
 
     // Go back by what we want to be 14 days worth of blocks
-    int nHeightFirst = pindexLast->nHeight - (params.DifficultyAdjustmentInterval()-1);
+    int nHeightFirst = pidxLast->nHeight - (params.DifficultyAdjustmentInterval()-1);
     assert(nHeightFirst >= 0);
-    const CBlockIndex* pindexFirst = pindexLast->GetAncestor(nHeightFirst);
-    assert(pindexFirst);
+    const BLBlockIndex* pidxFirst = pidxLast->getAncestor(nHeightFirst);
+    assert(pidxFirst);
 
-    return WizblCalculateNextWorkRequired(pindexLast, pindexFirst->GetBlockTime(), params);
+    return WizblCalculateNextWorkRequired(pidxLast, pidxFirst->getBlockTime(), params);
 }
 
 
 // Depricated for Wizbl
-unsigned int WizblCalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nFirstBlockTime, const Consensus::Params& params)
-{
+unsigned int WizblCalculateNextWorkRequired(const BLBlockIndex* pidxLast, int64_t nFirstBlockTime, const Consensus::Params& params) {
     if (params.fPowNoRetargeting)
-        return pindexLast->nBits;
+        return pidxLast->nBits;
     
     // Limit adjustment step
-    int64_t nActualTimespan = pindexLast->GetBlockTime() - nFirstBlockTime;
+    int64_t nActualTimespan = pidxLast->getBlockTime() - nFirstBlockTime;
     if (nActualTimespan < params.nPowTargetTimespanLegacy/4)
         nActualTimespan = params.nPowTargetTimespanLegacy/4;
     if (nActualTimespan > params.nPowTargetTimespanLegacy*4)
@@ -127,18 +118,17 @@ unsigned int WizblCalculateNextWorkRequired(const CBlockIndex* pindexLast, int64
     // Retarget
     const arith_uint256 bnPowLimit = UintToArith256(params.PowLimit(false));
     arith_uint256 bnNew;
-    bnNew.SetCompact(pindexLast->nBits);
+    bnNew.setCompact(pidxLast->nBits);
     bnNew *= nActualTimespan;
     bnNew /= params.nPowTargetTimespanLegacy;
     
     if (bnNew > bnPowLimit)
         bnNew = bnPowLimit;
     
-    return bnNew.GetCompact();
+    return bnNew.getCompact();
 }
 
-bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& params)
-{
+bool CheckEquihashSolution(const BLBlockHeader *pblock, const WBLChainParams& params) {
     unsigned int n = params.EquihashN();
     unsigned int k = params.EquihashK();
 
@@ -164,13 +154,12 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     return true;
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool postfork, const Consensus::Params& params)
-{
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool postfork, const Consensus::Params& params) {
     bool fNegative;
     bool fOverflow;
     arith_uint256 bnTarget;
 
-    bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
+    bnTarget.setCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.PowLimit(postfork)))

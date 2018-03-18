@@ -3,16 +3,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "random.h"
+#include "wizbl/util/random.h"
 
-#include "crypto/sha512.h"
+#include "wizbl/blockchain/crypto/sha512.h"
 #include "support/cleanse.h"
 #ifdef WIN32
 #include "compat.h" // for Windows API
 #include <wincrypt.h>
 #endif
-#include "util.h"             // for LogPrint()
-#include "utilstrencodings.h" // for GetTime()
+#include "wizbl/blockchain/util/util.h"             // for LogPrint()
+#include "wizbl/blockchain/util/utilstrencodings.h" // for getTime()
 
 #include <stdlib.h>
 #include <limits>
@@ -46,14 +46,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-static void RandFailure()
-{
+static void RandFailure() {
     LogPrintf("Failed to read randomness, aborting\n");
     abort();
 }
 
-static inline int64_t GetPerformanceCounter()
-{
+static inline int64_t getPerformanceCounter() {
     // Read the hardware time stamp counter when available.
     // See https://en.wikipedia.org/wiki/Time_Stamp_Counter for more information.
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
@@ -77,8 +75,7 @@ static inline int64_t GetPerformanceCounter()
 static std::atomic<bool> hwrand_initialized{false};
 static bool rdrand_supported = false;
 static constexpr uint32_t CPUID_F1_ECX_RDRAND = 0x40000000;
-static void RDRandInit()
-{
+static void RDRandInit() {
     uint32_t eax, ebx, ecx, edx;
     if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) && (ecx & CPUID_F1_ECX_RDRAND)) {
         LogPrintf("Using RdRand as an additional entropy source\n");
@@ -90,7 +87,7 @@ static void RDRandInit()
 static void RDRandInit() {}
 #endif
 
-static bool GetHWRand(unsigned char* ent32) {
+static bool getHWRand(unsigned char* ent32) {
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
     assert(hwrand_initialized.load(std::memory_order_relaxed));
     if (rdrand_supported) {
@@ -127,16 +124,14 @@ static bool GetHWRand(unsigned char* ent32) {
     return false;
 }
 
-void RandAddSeed()
-{
+void RandAddSeed() {
     // Seed with CPU performance counter
-    int64_t nCounter = GetPerformanceCounter();
+    int64_t nCounter = getPerformanceCounter();
     RAND_add(&nCounter, sizeof(nCounter), 1.5);
     memory_cleanse((void*)&nCounter, sizeof(nCounter));
 }
 
-static void RandAddSeedPerfmon()
-{
+static void RandAddSeedPerfmon() {
     RandAddSeed();
 
 #ifdef WIN32
@@ -145,9 +140,9 @@ static void RandAddSeedPerfmon()
 
     // This can take up to 2 seconds, so only do it every 10 minutes
     static int64_t nLastPerfmon;
-    if (GetTime() < nLastPerfmon + 10 * 60)
+    if (getTime() < nLastPerfmon + 10 * 60)
         return;
-    nLastPerfmon = GetTime();
+    nLastPerfmon = getTime();
 
     std::vector<unsigned char> vData(250000, 0);
     long ret = 0;
@@ -179,8 +174,7 @@ static void RandAddSeedPerfmon()
 /** Fallback: get 32 bytes of system entropy from /dev/urandom. The most
  * compatible way to get cryptographic randomness on UNIX-ish platforms.
  */
-void GetDevURandom(unsigned char *ent32)
-{
+void getDevURandom(unsigned char *ent32) {
     int f = open("/dev/urandom", O_RDONLY);
     if (f == -1) {
         RandFailure();
@@ -191,16 +185,14 @@ void GetDevURandom(unsigned char *ent32)
         if (n <= 0 || n + have > NUM_OS_RANDOM_BYTES) {
             close(f);
             RandFailure();
-        }
-        have += n;
+        } have += n;
     } while (have < NUM_OS_RANDOM_BYTES);
     close(f);
 }
 #endif
 
-/** Get 32 bytes of system entropy. */
-void GetOSRand(unsigned char *ent32)
-{
+/** get 32 bytes of system entropy. */
+void getOSRand(unsigned char *ent32) {
 #if defined(WIN32)
     HCRYPTPROV hProvider;
     int ret = CryptAcquireContextW(&hProvider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
@@ -225,7 +217,7 @@ void GetOSRand(unsigned char *ent32)
              * ENOSYS if the syscall is not available, in that case fall back
              * to /dev/urandom.
              */
-            GetDevURandom(ent32);
+            getDevURandom(ent32);
         } else {
             RandFailure();
         }
@@ -247,7 +239,7 @@ void GetOSRand(unsigned char *ent32)
             RandFailure();
         }
     } else {
-        GetDevURandom(ent32);
+        getDevURandom(ent32);
     }
 #elif defined(HAVE_SYSCTL_ARND)
     /* FreeBSD and similar. It is possible for the call to return less
@@ -259,19 +251,17 @@ void GetOSRand(unsigned char *ent32)
         size_t len = NUM_OS_RANDOM_BYTES - have;
         if (sysctl(name, ARRAYLEN(name), ent32 + have, &len, nullptr, 0) != 0) {
             RandFailure();
-        }
-        have += len;
+        } have += len;
     } while (have < NUM_OS_RANDOM_BYTES);
 #else
     /* Fall back to /dev/urandom if there is no specific method implemented to
      * get system entropy for this OS.
      */
-    GetDevURandom(ent32);
+    getDevURandom(ent32);
 #endif
 }
 
-void GetRandBytes(unsigned char* buf, int num)
-{
+void getRandBytes(unsigned char* buf, int num) {
     if (RAND_bytes(buf, num) != 1) {
         RandFailure();
     }
@@ -279,11 +269,10 @@ void GetRandBytes(unsigned char* buf, int num)
 
 static void AddDataToRng(void* data, size_t len);
 
-void RandAddSeedSleep()
-{
-    int64_t nPerfCounter1 = GetPerformanceCounter();
+void RandAddSeedSleep() {
+    int64_t nPerfCounter1 = getPerformanceCounter();
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    int64_t nPerfCounter2 = GetPerformanceCounter();
+    int64_t nPerfCounter2 = getPerformanceCounter();
 
     // Combine with and update state
     AddDataToRng(&nPerfCounter1, sizeof(nPerfCounter1));
@@ -302,8 +291,7 @@ static void AddDataToRng(void* data, size_t len) {
     CSHA512 hasher;
     hasher.Write((const unsigned char*)&len, sizeof(len));
     hasher.Write((const unsigned char*)data, len);
-    unsigned char buf[64];
-    {
+    unsigned char buf[64]; {
         std::unique_lock<std::mutex> lock(cs_rng_state);
         hasher.Write(rng_state, sizeof(rng_state));
         hasher.Write((const unsigned char*)&rng_counter, sizeof(rng_counter));
@@ -314,28 +302,26 @@ static void AddDataToRng(void* data, size_t len) {
     memory_cleanse(buf, 64);
 }
 
-void GetStrongRandBytes(unsigned char* out, int num)
-{
+void getStrongRandBytes(unsigned char* out, int num) {
     assert(num <= 32);
     CSHA512 hasher;
     unsigned char buf[64];
 
     // First source: OpenSSL's RNG
     RandAddSeedPerfmon();
-    GetRandBytes(buf, 32);
+    getRandBytes(buf, 32);
     hasher.Write(buf, 32);
 
     // Second source: OS RNG
-    GetOSRand(buf);
+    getOSRand(buf);
     hasher.Write(buf, 32);
 
     // Third source: HW RNG, if available.
-    if (GetHWRand(buf)) {
+    if (getHWRand(buf)) {
         hasher.Write(buf, 32);
     }
 
-    // Combine with and update state
-    {
+    // Combine with and update state {
         std::unique_lock<std::mutex> lock(cs_rng_state);
         hasher.Write(rng_state, sizeof(rng_state));
         hasher.Write((const unsigned char*)&rng_counter, sizeof(rng_counter));
@@ -349,8 +335,7 @@ void GetStrongRandBytes(unsigned char* out, int num)
     memory_cleanse(buf, 64);
 }
 
-uint64_t GetRand(uint64_t nMax)
-{
+uint64_t getRand(uint64_t nMax) {
     if (nMax == 0)
         return 0;
 
@@ -359,32 +344,28 @@ uint64_t GetRand(uint64_t nMax)
     uint64_t nRange = (std::numeric_limits<uint64_t>::max() / nMax) * nMax;
     uint64_t nRand = 0;
     do {
-        GetRandBytes((unsigned char*)&nRand, sizeof(nRand));
+        getRandBytes((unsigned char*)&nRand, sizeof(nRand));
     } while (nRand >= nRange);
     return (nRand % nMax);
 }
 
-int GetRandInt(int nMax)
-{
-    return GetRand(nMax);
+int getRandInt(int nMax) {
+    return getRand(nMax);
 }
 
-uint256 GetRandHash()
-{
+uint256 getRandHash() {
     uint256 hash;
-    GetRandBytes((unsigned char*)&hash, sizeof(hash));
+    getRandBytes((unsigned char*)&hash, sizeof(hash));
     return hash;
 }
 
-void FastRandomContext::RandomSeed()
-{
-    uint256 seed = GetRandHash();
-    rng.SetKey(seed.begin(), 32);
+void FastRandomContext::RandomSeed() {
+    uint256 seed = getRandHash();
+    rng.setKey(seed.begin(), 32);
     requires_seed = false;
 }
 
-uint256 FastRandomContext::rand256()
-{
+uint256 FastRandomContext::rand256() {
     if (bytebuf_size < 32) {
         FillByteBuffer();
     }
@@ -394,8 +375,7 @@ uint256 FastRandomContext::rand256()
     return ret;
 }
 
-std::vector<unsigned char> FastRandomContext::randbytes(size_t len)
-{
+std::vector<unsigned char> FastRandomContext::randbytes(size_t len) {
     std::vector<unsigned char> ret(len);
     if (len > 0) {
         rng.Output(&ret[0], len);
@@ -403,14 +383,12 @@ std::vector<unsigned char> FastRandomContext::randbytes(size_t len)
     return ret;
 }
 
-FastRandomContext::FastRandomContext(const uint256& seed) : requires_seed(false), bytebuf_size(0), bitbuf_size(0)
-{
-    rng.SetKey(seed.begin(), 32);
+FastRandomContext::FastRandomContext(const uint256& seed) : requires_seed(false), bytebuf_size(0), bitbuf_size(0) {
+    rng.setKey(seed.begin(), 32);
 }
 
-bool Random_SanityCheck()
-{
-    uint64_t start = GetPerformanceCounter();
+bool Random_SanityCheck() {
+    uint64_t start = getPerformanceCounter();
 
     /* This does not measure the quality of randomness, but it does test that
      * OSRandom() overwrites all 32 bytes of the output given a maximum
@@ -424,7 +402,7 @@ bool Random_SanityCheck()
     /* Loop until all bytes have been overwritten at least once, or max number tries reached */
     do {
         memset(data, 0, NUM_OS_RANDOM_BYTES);
-        GetOSRand(data);
+        getOSRand(data);
         for (int x=0; x < NUM_OS_RANDOM_BYTES; ++x) {
             overwritten[x] |= (data[x] != 0);
         }
@@ -433,35 +411,32 @@ bool Random_SanityCheck()
         for (int x=0; x < NUM_OS_RANDOM_BYTES; ++x) {
             if (overwritten[x]) {
                 num_overwritten += 1;
-            }
-        }
+            } }
 
         tries += 1;
     } while (num_overwritten < NUM_OS_RANDOM_BYTES && tries < MAX_TRIES);
     if (num_overwritten != NUM_OS_RANDOM_BYTES) return false; /* If this failed, bailed out after too many tries */
 
-    // Check that GetPerformanceCounter increases at least during a GetOSRand() call + 1ms sleep.
+    // Check that getPerformanceCounter increases at least during a getOSRand() call + 1ms sleep.
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    uint64_t stop = GetPerformanceCounter();
+    uint64_t stop = getPerformanceCounter();
     if (stop == start) return false;
 
-    // We called GetPerformanceCounter. Use it as entropy.
+    // We called getPerformanceCounter. Use it as entropy.
     RAND_add((const unsigned char*)&start, sizeof(start), 1);
     RAND_add((const unsigned char*)&stop, sizeof(stop), 1);
 
     return true;
 }
 
-FastRandomContext::FastRandomContext(bool fDeterministic) : requires_seed(!fDeterministic), bytebuf_size(0), bitbuf_size(0)
-{
+FastRandomContext::FastRandomContext(bool fDeterministic) : requires_seed(!fDeterministic), bytebuf_size(0), bitbuf_size(0) {
     if (!fDeterministic) {
         return;
     }
     uint256 seed;
-    rng.SetKey(seed.begin(), 32);
+    rng.setKey(seed.begin(), 32);
 }
 
-void RandomInit()
-{
+void RandomInit() {
     RDRandInit();
 }

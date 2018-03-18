@@ -6,9 +6,9 @@
 #ifndef WIZBL_MERKLEBLOCK_H
 #define WIZBL_MERKLEBLOCK_H
 
-#include "serialize.h"
-#include "uint256.h"
-#include "primitives/block.h"
+#include "wizbl/util/serialize.h"
+#include "wizbl/blockchain/util/uint256.h"
+#include "wizbl/blockchain/primitives/block.h"
 #include "bloom.h"
 
 #include <vector>
@@ -47,8 +47,7 @@
  *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
  * The size constraints follow from this.
  */
-class CPartialMerkleTree
-{
+class CPartialMerkleTree {
 protected:
     /** the total number of transactions in the block */
     unsigned int nTransactions;
@@ -122,13 +121,12 @@ public:
  * Used to relay blocks as header + vector<merkle branch>
  * to filtered nodes.
  *
- * NOTE: The class assumes that the given CBlock has *at least* 1 transaction. If the CBlock has 0 txs, it will hit an assertion.
+ * NOTE: The class assumes that the given BLBlock has *at least* 1 transaction. If the BLBlock has 0 txs, it will hit an assertion.
  */
-class CMerkleBlock
-{
+class CMerkleBlock {
 public:
     /** Public only for unit testing */
-    CBlockHeader header;
+    BLBlockHeader header;
     CPartialMerkleTree txn;
 
 public:
@@ -136,14 +134,14 @@ public:
     std::vector<std::pair<unsigned int, uint256> > vMatchedTxn;
 
     /**
-     * Create from a CBlock, filtering transactions according to filter
+     * Create from a BLBlock, filtering transactions according to filter
      * Note that this will call IsRelevantAndUpdate on the filter for each transaction,
      * thus the filter will likely be modified.
      */
-    CMerkleBlock(const CBlock& block, CBloomFilter& filter);
+    CMerkleBlock(const BLBlock& block, CBloomFilter& filter);
 
-    // Create from a CBlock, matching the txids in the set
-    CMerkleBlock(const CBlock& block, const std::set<uint256>& txids);
+    // Create from a BLBlock, matching the txids in the set
+    CMerkleBlock(const BLBlock& block, const std::set<uint256>& txids);
 
     CMerkleBlock() {}
 

@@ -6,24 +6,24 @@
 #ifndef WIZBL_POW_H
 #define WIZBL_POW_H
 
-#include "arith_uint256.h"
-#include "consensus/params.h"
+#include "wizbl/blockchain/util/arith_uint256.h"
+#include "wizbl/blockchain/consensus/params.h"
 
 #include <stdint.h>
 
-class CBlockHeader;
-class CBlockIndex;
-class CChainParams;
+class BLBlockHeader;
+class BLBlockIndex;
+class WBLChainParams;
 class uint256;
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params&);
+unsigned int getNextWorkRequired(const BLBlockIndex* pidxLast, const BLBlockHeader *pblock, const Consensus::Params&);
 unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params);
 
-unsigned int WizblGetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params);
-unsigned int WizblCalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nFirstBlockTime, const Consensus::Params& params);
+unsigned int WizblgetNextWorkRequired(const BLBlockIndex* pidxLast, const BLBlockHeader *pblock, const Consensus::Params& params);
+unsigned int WizblCalculateNextWorkRequired(const BLBlockIndex* pidxLast, int64_t nFirstBlockTime, const Consensus::Params& params);
 
 /** Check whether the Equihash solution in a block header is valid */
-bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams&);
+bool CheckEquihashSolution(const BLBlockHeader *pblock, const WBLChainParams&);
 
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool postfork, const Consensus::Params&);

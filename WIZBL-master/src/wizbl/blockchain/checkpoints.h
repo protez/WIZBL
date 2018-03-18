@@ -5,22 +5,21 @@
 #ifndef WIZBL_CHECKPOINTS_H
 #define WIZBL_CHECKPOINTS_H
 
-#include "uint256.h"
+#include "wizbl/blockchain/util/uint256.h"
 
 #include <map>
 
-class CBlockIndex;
+class BLBlockIndex;
 struct CCheckpointData;
 
 /**
  * Block-chain checkpoints are compiled-in sanity checks.
  * They are updated every release or three.
  */
-namespace Checkpoints
-{
+namespace Checkpoints {
 
-//! Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
-CBlockIndex* GetLastCheckpoint(const CCheckpointData& data);
+//! Returns last BLBlockIndex* in mapBlockIndex that is a checkpoint
+BLBlockIndex* getLastCheckpoint(const CCheckpointData& data);
 
 } //namespace Checkpoints
 

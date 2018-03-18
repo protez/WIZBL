@@ -3,11 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "validationinterface.h"
+#include "wizbl/util/validation/validationinterface.h"
 #include "init.h"
 #include "scheduler.h"
-#include "sync.h"
-#include "util.h"
+#include "wizbl/blockchain/net/sync.h"
+#include "wizbl/blockchain/util/util.h"
 
 #include <list>
 #include <atomic>
@@ -15,15 +15,15 @@
 #include <boost/signals2/signal.hpp>
 
 struct MainSignalsInstance {
-    boost::signals2::signal<void (const CBlockIndex *, const CBlockIndex *, bool fInitialDownload)> UpdatedBlockTip;
+    boost::signals2::signal<void (const BLBlockIndex *, const BLBlockIndex *, bool fInitialDownload)> UpdatedBlockTip;
     boost::signals2::signal<void (const CTransactionRef &)> TransactionAddedToMempool;
-    boost::signals2::signal<void (const std::shared_ptr<const CBlock> &, const CBlockIndex *pindex, const std::vector<CTransactionRef>&)> BlockConnected;
-    boost::signals2::signal<void (const std::shared_ptr<const CBlock> &)> BlockDisconnected;
-    boost::signals2::signal<void (const CBlockLocator &)> SetBestChain;
+    boost::signals2::signal<void (const std::shared_ptr<const BLBlock> &, const BLBlockIndex *pidx, const std::vector<CTransactionRef>&)> BlockConnected;
+    boost::signals2::signal<void (const std::shared_ptr<const BLBlock> &)> BlockDisconnected;
+    boost::signals2::signal<void (const BLBlockLocator &)> setBestChain;
     boost::signals2::signal<void (const uint256 &)> Inventory;
     boost::signals2::signal<void (int64_t nBestBlockTime, CConnman* connman)> Broadcast;
-    boost::signals2::signal<void (const CBlock&, const CValidationState&)> BlockChecked;
-    boost::signals2::signal<void (const CBlockIndex *, const std::shared_ptr<const CBlock>&)> NewPoWValidBlock;
+    boost::signals2::signal<void (const BLBlock&, const CValidationState&)> BlockChecked;
+    boost::signals2::signal<void (const BLBlockIndex *, const std::shared_ptr<const BLBlock>&)> NewPoWValidBlock;
 
     // We are not allowed to assume the scheduler only runs in one thread,
     // but must ensure all callbacks happen in-order, so we end up creating
@@ -33,23 +33,22 @@ struct MainSignalsInstance {
     MainSignalsInstance(CScheduler *pscheduler) : m_schedulerClient(pscheduler) {}
 };
 
-static CMainSignals g_signals;
+static BLMainSignals g_signals;
 
-void CMainSignals::RegisterBackgroundSignalScheduler(CScheduler& scheduler) {
+void BLMainSignals::RegisterBackgroundSignalScheduler(CScheduler& scheduler) {
     assert(!m_internals);
     m_internals.reset(new MainSignalsInstance(&scheduler));
 }
 
-void CMainSignals::UnregisterBackgroundSignalScheduler() {
+void BLMainSignals::UnregisterBackgroundSignalScheduler() {
     m_internals.reset(nullptr);
 }
 
-void CMainSignals::FlushBackgroundCallbacks() {
+void BLMainSignals::FlushBackgroundCallbacks() {
     m_internals->m_schedulerClient.EmptyQueue();
 }
 
-CMainSignals& GetMainSignals()
-{
+BLMainSignals& getMainSignals() {
     return g_signals;
 }
 
@@ -58,7 +57,7 @@ void RegisterValidationInterface(CValidationInterface* pwalletIn) {
     g_signals.m_internals->TransactionAddedToMempool.connect(boost::bind(&CValidationInterface::TransactionAddedToMempool, pwalletIn, _1));
     g_signals.m_internals->BlockConnected.connect(boost::bind(&CValidationInterface::BlockConnected, pwalletIn, _1, _2, _3));
     g_signals.m_internals->BlockDisconnected.connect(boost::bind(&CValidationInterface::BlockDisconnected, pwalletIn, _1));
-    g_signals.m_internals->SetBestChain.connect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
+    g_signals.m_internals->setBestChain.connect(boost::bind(&CValidationInterface::setBestChain, pwalletIn, _1));
     g_signals.m_internals->Inventory.connect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
     g_signals.m_internals->Broadcast.connect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn, _1, _2));
     g_signals.m_internals->BlockChecked.connect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
@@ -69,7 +68,7 @@ void UnregisterValidationInterface(CValidationInterface* pwalletIn) {
     g_signals.m_internals->BlockChecked.disconnect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, _1, _2));
     g_signals.m_internals->Broadcast.disconnect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn, _1, _2));
     g_signals.m_internals->Inventory.disconnect(boost::bind(&CValidationInterface::Inventory, pwalletIn, _1));
-    g_signals.m_internals->SetBestChain.disconnect(boost::bind(&CValidationInterface::SetBestChain, pwalletIn, _1));
+    g_signals.m_internals->setBestChain.disconnect(boost::bind(&CValidationInterface::setBestChain, pwalletIn, _1));
     g_signals.m_internals->TransactionAddedToMempool.disconnect(boost::bind(&CValidationInterface::TransactionAddedToMempool, pwalletIn, _1));
     g_signals.m_internals->BlockConnected.disconnect(boost::bind(&CValidationInterface::BlockConnected, pwalletIn, _1, _2, _3));
     g_signals.m_internals->BlockDisconnected.disconnect(boost::bind(&CValidationInterface::BlockDisconnected, pwalletIn, _1));
@@ -81,7 +80,7 @@ void UnregisterAllValidationInterfaces() {
     g_signals.m_internals->BlockChecked.disconnect_all_slots();
     g_signals.m_internals->Broadcast.disconnect_all_slots();
     g_signals.m_internals->Inventory.disconnect_all_slots();
-    g_signals.m_internals->SetBestChain.disconnect_all_slots();
+    g_signals.m_internals->setBestChain.disconnect_all_slots();
     g_signals.m_internals->TransactionAddedToMempool.disconnect_all_slots();
     g_signals.m_internals->BlockConnected.disconnect_all_slots();
     g_signals.m_internals->BlockDisconnected.disconnect_all_slots();
@@ -89,38 +88,38 @@ void UnregisterAllValidationInterfaces() {
     g_signals.m_internals->NewPoWValidBlock.disconnect_all_slots();
 }
 
-void CMainSignals::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) {
-    m_internals->UpdatedBlockTip(pindexNew, pindexFork, fInitialDownload);
+void BLMainSignals::UpdatedBlockTip(const BLBlockIndex *pidxNew, const BLBlockIndex *pidxFork, bool fInitialDownload) {
+    m_internals->UpdatedBlockTip(pidxNew, pidxFork, fInitialDownload);
 }
 
-void CMainSignals::TransactionAddedToMempool(const CTransactionRef &ptx) {
+void BLMainSignals::TransactionAddedToMempool(const CTransactionRef &ptx) {
     m_internals->TransactionAddedToMempool(ptx);
 }
 
-void CMainSignals::BlockConnected(const std::shared_ptr<const CBlock> &pblock, const CBlockIndex *pindex, const std::vector<CTransactionRef>& vtxConflicted) {
-    m_internals->BlockConnected(pblock, pindex, vtxConflicted);
+void BLMainSignals::BlockConnected(const std::shared_ptr<const BLBlock> &pblock, const BLBlockIndex *pidx, const std::vector<CTransactionRef>& vtxConflicted) {
+    m_internals->BlockConnected(pblock, pidx, vtxConflicted);
 }
 
-void CMainSignals::BlockDisconnected(const std::shared_ptr<const CBlock> &pblock) {
+void BLMainSignals::BlockDisconnected(const std::shared_ptr<const BLBlock> &pblock) {
     m_internals->BlockDisconnected(pblock);
 }
 
-void CMainSignals::SetBestChain(const CBlockLocator &locator) {
-    m_internals->SetBestChain(locator);
+void BLMainSignals::setBestChain(const BLBlockLocator &locator) {
+    m_internals->setBestChain(locator);
 }
 
-void CMainSignals::Inventory(const uint256 &hash) {
+void BLMainSignals::Inventory(const uint256 &hash) {
     m_internals->Inventory(hash);
 }
 
-void CMainSignals::Broadcast(int64_t nBestBlockTime, CConnman* connman) {
+void BLMainSignals::Broadcast(int64_t nBestBlockTime, CConnman* connman) {
     m_internals->Broadcast(nBestBlockTime, connman);
 }
 
-void CMainSignals::BlockChecked(const CBlock& block, const CValidationState& state) {
+void BLMainSignals::BlockChecked(const BLBlock& block, const CValidationState& state) {
     m_internals->BlockChecked(block, state);
 }
 
-void CMainSignals::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock> &block) {
-    m_internals->NewPoWValidBlock(pindex, block);
+void BLMainSignals::NewPoWValidBlock(const BLBlockIndex *pidx, const std::shared_ptr<const BLBlock> &block) {
+    m_internals->NewPoWValidBlock(pidx, block);
 }
