@@ -14,7 +14,7 @@
 #ifndef WIZBL_BASE58_H
 #define WIZBL_BASE58_H
 
-#include "chainparams.h"
+#include "wizbl/blockchain/chainparams.h"
 #include "key.h"
 #include "pubkey.h"
 #include "script/script.h"
@@ -79,12 +79,12 @@ protected:
     vector_uchar vchData;
 
     CBase58Data();
-    void SetData(const std::vector<unsigned char> &vchVersionIn, const void* pdata, size_t nSize);
-    void SetData(const std::vector<unsigned char> &vchVersionIn, const unsigned char *pbegin, const unsigned char *pend);
+    void setData(const std::vector<unsigned char> &vchVersionIn, const void* pdata, size_t nSize);
+    void setData(const std::vector<unsigned char> &vchVersionIn, const unsigned char *pbegin, const unsigned char *pend);
 
 public:
-    bool SetString(const char* psz, unsigned int nVersionBytes = 1);
-    bool SetString(const std::string& str);
+    bool setString(const char* psz, unsigned int nVersionBytes = 1);
+    bool setString(const std::string& str);
     std::string ToString() const;
     int CompareTo(const CBase58Data& b58) const;
 
@@ -103,25 +103,25 @@ public:
  */
 class CWizblAddress : public CBase58Data {
 public:
-    bool Set(const CKeyID &id);
-    bool Set(const CScriptID &id);
-    bool Set(const CTxDestination &dest);
-    bool Set(const CKeyID &id, const CChainParams &params);
-    bool Set(const CScriptID &id, const CChainParams &params);
-    bool Set(const CTxDestination &dest, const CChainParams &params);
+    bool set(const CKeyID &id);
+    bool set(const CScriptID &id);
+    bool set(const CTxDestination &dest);
+    bool set(const CKeyID &id, const WBLChainParams &params);
+    bool set(const CScriptID &id, const WBLChainParams &params);
+    bool set(const CTxDestination &dest, const WBLChainParams &params);
     bool IsValid() const;
-    bool IsValid(const CChainParams &params) const;
+    bool IsValid(const WBLChainParams &params) const;
 
     CWizblAddress() {}
-    CWizblAddress(const CTxDestination &dest) { Set(dest); }
-    CWizblAddress(const CTxDestination &dest, const CChainParams &params) { Set(dest, params); }
-    CWizblAddress(const std::string& strAddress) { SetString(strAddress); }
-    CWizblAddress(const char* pszAddress) { SetString(pszAddress); }
+    CWizblAddress(const CTxDestination &dest) { set(dest); }
+    CWizblAddress(const CTxDestination &dest, const WBLChainParams &params) { set(dest, params); }
+    CWizblAddress(const std::string& strAddress) { setString(strAddress); }
+    CWizblAddress(const char* pszAddress) { setString(pszAddress); }
 
-    CTxDestination Get() const;
-    CTxDestination Get(const CChainParams &params) const;
-    bool GetKeyID(CKeyID &keyID) const;
-    bool GetKeyID(CKeyID &keyID, const CChainParams &params) const;
+    CTxDestination get() const;
+    CTxDestination get(const WBLChainParams &params) const;
+    bool getKeyID(CKeyID &keyID) const;
+    bool getKeyID(CKeyID &keyID, const WBLChainParams &params) const;
     bool IsScript() const;
 };
 
@@ -131,26 +131,26 @@ public:
 class CWizblSecret : public CBase58Data
 {
 public:
-    void SetKey(const CKey& vchSecret);
-    CKey GetKey();
+    void setKey(const CKey& vchSecret);
+    CKey getKey();
     bool IsValid() const;
-    bool SetString(const char* pszSecret);
-    bool SetString(const std::string& strSecret);
+    bool setString(const char* pszSecret);
+    bool setString(const std::string& strSecret);
 
-    CWizblSecret(const CKey& vchSecret) { SetKey(vchSecret); }
+    CWizblSecret(const CKey& vchSecret) { setKey(vchSecret); }
     CWizblSecret() {}
 };
 
-template<typename K, int Size, CChainParams::Base58Type Type> class CWizblExtKeyBase : public CBase58Data
+template<typename K, int Size, WBLChainParams::Base58Type Type> class CWizblExtKeyBase : public CBase58Data
 {
 public:
-    void SetKey(const K &key) {
+    void setKey(const K &key) {
         unsigned char vch[Size];
         key.Encode(vch);
-        SetData(Params().Base58Prefix(Type), vch, vch+Size);
+        setData(Params().Base58Prefix(Type), vch, vch+Size);
     }
 
-    K GetKey() {
+    K getKey() {
         K ret;
         if (vchData.size() == Size) {
             // If base58 encoded data does not hold an ext key, return a !IsValid() key
@@ -160,17 +160,17 @@ public:
     }
 
     CWizblExtKeyBase(const K &key) {
-        SetKey(key);
+        setKey(key);
     }
 
     CWizblExtKeyBase(const std::string& strBase58c) {
-        SetString(strBase58c.c_str(), Params().Base58Prefix(Type).size());
+        setString(strBase58c.c_str(), Params().Base58Prefix(Type).size());
     }
 
     CWizblExtKeyBase() {}
 };
 
-typedef CWizblExtKeyBase<CExtKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_SECRET_KEY> CWizblExtKey;
-typedef CWizblExtKeyBase<CExtPubKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_PUBLIC_KEY> CWizblExtPubKey;
+typedef CWizblExtKeyBase<CExtKey, BIP32_EXTKEY_SIZE, WBLChainParams::EXT_SECRET_KEY> CWizblExtKey;
+typedef CWizblExtKeyBase<CExtPubKey, BIP32_EXTKEY_SIZE, WBLChainParams::EXT_PUBLIC_KEY> CWizblExtPubKey;
 
 #endif // WIZBL_BASE58_H

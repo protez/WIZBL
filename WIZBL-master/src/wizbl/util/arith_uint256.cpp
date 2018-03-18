@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "arith_uint256.h"
 
-#include "uint256.h"
+
+#include "wizbl/blockchain/util/uint256.h"
 #include "utilstrencodings.h"
 #include "crypto/common.h"
 
@@ -17,7 +17,7 @@ base_uint<BITS>::base_uint(const std::string& str)
 {
     static_assert(BITS/32 > 0 && BITS%32 == 0, "Template parameter BITS must be a positive multiple of 32.");
 
-    SetHex(str);
+    setHex(str);
 }
 
 template <unsigned int BITS>
@@ -147,27 +147,27 @@ double base_uint<BITS>::getdouble() const
 }
 
 template <unsigned int BITS>
-std::string base_uint<BITS>::GetHex() const
+std::string base_uint<BITS>::getHex() const
 {
-    return ArithToUint256(*this).GetHex();
+    return ArithToUint256(*this).getHex();
 }
 
 template <unsigned int BITS>
-void base_uint<BITS>::SetHex(const char* psz)
+void base_uint<BITS>::setHex(const char* psz)
 {
     *this = UintToArith256(uint256S(psz));
 }
 
 template <unsigned int BITS>
-void base_uint<BITS>::SetHex(const std::string& str)
+void base_uint<BITS>::setHex(const std::string& str)
 {
-    SetHex(str.c_str());
+    setHex(str.c_str());
 }
 
 template <unsigned int BITS>
 std::string base_uint<BITS>::ToString() const
 {
-    return (GetHex());
+    return (getHex());
 }
 
 template <unsigned int BITS>
@@ -195,15 +195,15 @@ template base_uint<256>& base_uint<256>::operator/=(const base_uint<256>& b);
 template int base_uint<256>::CompareTo(const base_uint<256>&) const;
 template bool base_uint<256>::EqualTo(uint64_t) const;
 template double base_uint<256>::getdouble() const;
-template std::string base_uint<256>::GetHex() const;
+template std::string base_uint<256>::getHex() const;
 template std::string base_uint<256>::ToString() const;
-template void base_uint<256>::SetHex(const char*);
-template void base_uint<256>::SetHex(const std::string&);
+template void base_uint<256>::setHex(const char*);
+template void base_uint<256>::setHex(const std::string&);
 template unsigned int base_uint<256>::bits() const;
 
 // This implementation directly uses shifts instead of going
 // through an intermediate MPI representation.
-arith_uint256& arith_uint256::SetCompact(uint32_t nCompact, bool* pfNegative, bool* pfOverflow)
+arith_uint256& arith_uint256::setCompact(uint32_t nCompact, bool* pfNegative, bool* pfOverflow)
 {
     int nSize = nCompact >> 24;
     uint32_t nWord = nCompact & 0x007fffff;
@@ -223,15 +223,15 @@ arith_uint256& arith_uint256::SetCompact(uint32_t nCompact, bool* pfNegative, bo
     return *this;
 }
 
-uint32_t arith_uint256::GetCompact(bool fNegative) const
+uint32_t arith_uint256::getCompact(bool fNegative) const
 {
     int nSize = (bits() + 7) / 8;
     uint32_t nCompact = 0;
     if (nSize <= 3) {
-        nCompact = GetLow64() << 8 * (3 - nSize);
+        nCompact = getLow64() << 8 * (3 - nSize);
     } else {
         arith_uint256 bn = *this >> 8 * (nSize - 3);
-        nCompact = bn.GetLow64();
+        nCompact = bn.getLow64();
     }
     // The 0x00800000 bit denotes the sign.
     // Thus, if it is already set, divide the mantissa by 256 and increase the exponent.

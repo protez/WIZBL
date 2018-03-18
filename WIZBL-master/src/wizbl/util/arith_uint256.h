@@ -232,9 +232,9 @@ public:
     friend inline bool operator==(const base_uint& a, uint64_t b) { return a.EqualTo(b); }
     friend inline bool operator!=(const base_uint& a, uint64_t b) { return !a.EqualTo(b); }
 
-    std::string GetHex() const;
-    void SetHex(const char* psz);
-    void SetHex(const std::string& str);
+    std::string getHex() const;
+    void setHex(const char* psz);
+    void setHex(const std::string& str);
     std::string ToString() const;
 
     unsigned int size() const
@@ -248,7 +248,7 @@ public:
      */
     unsigned int bits() const;
 
-    uint64_t GetLow64() const
+    uint64_t getLow64() const
     {
         assert(WIDTH >= 2);
         return pn[0] | (uint64_t)pn[1] << 32;
@@ -283,8 +283,8 @@ public:
      * complexities of the sign bit and using base 256 are probably an
      * implementation accident.
      */
-    arith_uint256& SetCompact(uint32_t nCompact, bool *pfNegative = nullptr, bool *pfOverflow = nullptr);
-    uint32_t GetCompact(bool fNegative = false) const;
+    arith_uint256& setCompact(uint32_t nCompact, bool *pfNegative = nullptr, bool *pfOverflow = nullptr);
+    uint32_t getCompact(bool fNegative = false) const;
 
     friend uint256 ArithToUint256(const arith_uint256 &);
     friend arith_uint256 UintToArith256(const uint256 &);
